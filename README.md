@@ -10,9 +10,15 @@ let pool : @moonpool.Pool[Conn] = @moonpool.Pool::new(
 )
 match pool.take(now) {
   Ready(conn) => use(conn)
-  Make => use(open())
+  Stale(conn) => close(conn) // too old to use; take again
+  Make => {
+    let conn = open()
+    pool.made(conn, now)
+    use(conn)
+  }
   Wait => queue()
 }
+pool.give(conn, now) // or pool.drop(conn) when it broke
 
 // A retry policy that says how long to wait, and when to stop.
 let policy = @moonpool.Backoff::new(attempts=5)
@@ -69,6 +75,18 @@ A pool hands out the most recently returned resource, not the oldest. A warm
 connection is likelier to still be good, and handing out the newest lets the oldest
 age past `keep` and be evicted — which is how a pool shrinks again after a burst.
 A queue would keep every connection just warm enough never to be collected.
+
+## A resource is never lost, and never younger than it is
+
+`take` hands an idle resource that is past its age back as `Stale` rather than
+skipping it, so the caller closes it whether or not the eviction timer has run.
+And the pool remembers when each lent resource was made, recognising it by identity
+on the way back, so `give` does not reset its age and `life` retires a connection
+that has been reused all along. A resource returned without having been registered
+by `made` is taken as born when it comes back.
+
+Both were wrong in 0.1.0: an expired resource that `take` came across was dropped
+without the caller ever seeing it, and every `give` stamped the resource as new.
 
 ## One package, not three
 

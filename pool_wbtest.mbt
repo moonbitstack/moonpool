@@ -75,7 +75,7 @@ test "a broken resource frees its slot rather than holding it for ever" {
   assert_eq(p.take(0L) is Make, true)
   assert_eq(p.take(0L) is Wait, true)
   // Without this the pool would think one is still out and never make another.
-  p.drop()
+  p.drop(1)
   assert_eq(p.live(), 0)
   assert_eq(p.take(0L) is Make, true)
 }
@@ -106,8 +106,9 @@ test "a resource that has lived too long is evicted however recently it was used
     ),
   )
   let _ = p.take(0L)
+  p.made(1, 0L)
   // Born at zero, handed back at nine seconds: young by idle time, old by age.
-  let _ = p.give_new(1, 0L, ms(9_000L))
+  let _ = p.give(1, ms(9_000L))
   assert_eq(p.evict(ms(9_500L)).length(), 0)
   assert_eq(p.evict(ms(10_000L)), [1])
 }
@@ -119,9 +120,79 @@ test "an expired resource is not handed out, even before eviction runs" {
   )
   let _ = p.take(0L)
   let _ = p.give(1, 0L)
-  // The timer has not run, but taking one must not hand back a stale resource.
-  assert_eq(p.take(ms(2_000L)) is Make, true)
+  // The timer has not run, but taking one must not hand back a stale resource as
+  // ready. It comes back as stale, for the caller to close, and is off the books.
+  match p.take(ms(2_000L)) {
+    Stale(v) => assert_eq(v, 1)
+    _ => fail("an expired resource should come back stale")
+  }
   assert_eq(p.idle(), 0)
+  assert_eq(p.live(), 0)
+  assert_eq(p.take(ms(2_000L)) is Make, true)
+}
+
+///|
+test "no stale resource is lost: every one taken out is handed to the caller" {
+  let p : Pool[Int] = Pool::new(
+    limits=Limits::new(size=4, keep=@moondate.Span::new(seconds=1L)),
+  )
+  for i = 0; i < 3; i = i + 1 {
+    let _ = p.take(0L)
+  }
+  for v in [1, 2, 3] {
+    let _ = p.give(v, 0L)
+  }
+  // 0.1.0 skipped past these to answer `Make`, and the three were never closed.
+  let closed : Array[Int] = []
+  for ;; {
+    match p.take(ms(5_000L)) {
+      Stale(v) => closed.push(v)
+      Make => break
+      _ => fail("only stale resources and room to make one are left")
+    }
+  }
+  assert_eq(closed, [3, 2, 1])
+}
+
+///|
+test "birth survives a loan, so a reused resource still retires by age" {
+  let p : Pool[Int] = Pool::new(
+    limits=Limits::new(
+      size=4,
+      keep=@moondate.Span::new(minutes=30L),
+      life=@moondate.Span::new(seconds=10L),
+    ),
+  )
+  assert_eq(p.take(0L) is Make, true)
+  p.made(1, 0L)
+  // Lent and returned twice, the last time a second before its tenth birthday.
+  let _ = p.give(1, ms(1_000L))
+  assert_eq(p.take(ms(2_000L)) is Ready(1), true)
+  let _ = p.give(1, ms(9_000L))
+  // 0.1.0 stamped it born again at nine seconds and kept it until nineteen.
+  assert_eq(p.evict(ms(10_000L)), [1])
+}
+
+///|
+test "a registered resource is counted as lent until it comes back" {
+  let p : Pool[Int] = Pool::new(limits=Limits::new(size=2))
+  assert_eq(p.take(0L) is Make, true)
+  p.made(5, 0L)
+  assert_eq(p.live(), 1)
+  assert_eq(p.busy(), 1)
+  p.drop(5)
+  assert_eq(p.live(), 0)
+  assert_eq(p.busy(), 0)
+}
+
+///|
+test "a resource that could not be made gives its room back" {
+  let p : Pool[Int] = Pool::new(limits=Limits::new(size=1))
+  assert_eq(p.take(0L) is Make, true)
+  assert_eq(p.take(0L) is Wait, true)
+  p.unmade()
+  assert_eq(p.live(), 0)
+  assert_eq(p.take(0L) is Make, true)
 }
 
 ///|

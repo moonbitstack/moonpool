@@ -76,21 +76,24 @@ pub fn Limits::to_repr(Self) -> @debug.Repr
 pub struct Pool[T] {
   limits : Limits
   free : Array[(T, Int64, Int64)]
-  mut busy : Int
+  out : Array[(T, Int64)]
+  mut reserved : Int
 }
 pub fn[T] Pool::busy(Self[T]) -> Int
 pub fn[T] Pool::close(Self[T]) -> Array[T]
-pub fn[T] Pool::drop(Self[T]) -> Unit
+pub fn[T] Pool::drop(Self[T], T) -> Unit
 pub fn[T] Pool::evict(Self[T], Int64) -> Array[T]
 pub fn[T] Pool::give(Self[T], T, Int64) -> Bool
-pub fn[T] Pool::give_new(Self[T], T, Int64, Int64) -> Bool
 pub fn[T] Pool::idle(Self[T]) -> Int
 pub fn[T] Pool::live(Self[T]) -> Int
+pub fn[T] Pool::made(Self[T], T, Int64) -> Unit
 pub fn[T] Pool::new(limits? : Limits) -> Self[T]
 pub fn[T] Pool::take(Self[T], Int64) -> Taken[T]
+pub fn[T] Pool::unmade(Self[T]) -> Unit
 
 pub(all) enum Taken[T] {
   Ready(T)
+  Stale(T)
   Make
   Wait
 }

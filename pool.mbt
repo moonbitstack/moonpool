@@ -6,10 +6,12 @@
 ///
 /// It never blocks and never opens anything: waiting and connecting both need a
 /// runtime, and this package has none. `Make` is the pool saying there is room for
-/// another; `Wait` is it saying there is not, and the caller's queue decides what
-/// that means.
+/// another, and reserving it; `Wait` is it saying there is not, and the caller's
+/// queue decides what that means. `Stale` is an idle resource too old to use, handed
+/// back so the caller can close it before asking again.
 pub(all) enum Taken[T] {
   Ready(T)
+  Stale(T)
   Make
   Wait
 }
@@ -63,36 +65,42 @@ pub fn Limits::new(
   { size, idle, keep, life, }
 }
 
-// One resource the pool holds, as `(item, born, rested)`. A tuple rather than a
-// named type because a named private one cannot appear in a public struct's
-// fields, and this one is nobody's business outside this file.
+// One resource the pool holds idle, as `(item, born, rested)`, and one it has lent,
+// as `(item, born)`. Tuples rather than named types because a named private one
+// cannot appear in a public struct's fields, and these are nobody's business outside
+// this file.
 
 ///|
 /// The bookkeeping of holding a limited number of things.
 ///
 /// It does not open, close, or wait — a caller with a runtime does all three. What
-/// it knows is how many are live, which are idle, and which have sat or lived long
-/// enough to be let go.
+/// it knows is how many are live, which are idle, which are lent and since when
+/// each was made, and which have sat or lived long enough to be let go.
 ///
 /// Time is passed in as whatever the caller's clock reads, in nanoseconds; the
 /// value's origin does not matter because only differences are used. That is what
 /// makes a test drive a pool through an hour in three lines.
+///
+/// A lent resource is recognised on its way back by identity, which is what every
+/// connection handle has. That is how its birth survives the loan: a pool that
+/// stamped a returned resource as new would never retire one by age, however old.
 pub struct Pool[T] {
   limits : Limits
   free : Array[(T, Int64, Int64)]
-  mut busy : Int
+  out : Array[(T, Int64)]
+  mut reserved : Int
 }
 
 ///|
 /// An empty pool.
 pub fn[T] Pool::new(limits? : Limits = limits) -> Pool[T] {
-  { limits, free: [], busy: 0, }
+  { limits, free: [], out: [], reserved: 0, }
 }
 
 ///|
-/// How many resources exist right now, idle and in use together.
+/// How many resources exist right now: idle, lent, and being made.
 pub fn[T] Pool::live(self : Pool[T]) -> Int {
-  self.free.length() + self.busy
+  self.free.length() + self.out.length() + self.reserved
 }
 
 ///|
@@ -102,66 +110,73 @@ pub fn[T] Pool::idle(self : Pool[T]) -> Int {
 }
 
 ///|
-/// How many are checked out.
+/// How many are lent out or being made.
 pub fn[T] Pool::busy(self : Pool[T]) -> Int {
-  self.busy
+  self.out.length() + self.reserved
 }
 
 ///|
-/// Take one, or be told to make one, or to wait.
+/// Take one, or be told to make one, or to wait — or be handed one that is too old
+/// to use.
 ///
-/// The most recently returned resource is handed out first. That is not
-/// arbitrary: a warm connection is likelier to still be good than a cold one, and
-/// handing out the newest lets the oldest age past `keep` and be evicted, which is
-/// how a pool shrinks after a burst.
+/// The most recently returned resource is handed out first. That is not arbitrary:
+/// a warm connection is likelier to still be good than a cold one, and handing out
+/// the newest lets the oldest age past `keep` and be evicted, which is how a pool
+/// shrinks after a burst.
+///
+/// `Stale` is an idle resource past its age. It is already out of the pool and out
+/// of the count; the caller closes it and takes again. Handing it back rather than
+/// dropping it is the point — a pool that discarded it silently would leak whatever
+/// it holds whenever the eviction timer had not run first.
 pub fn[T] Pool::take(self : Pool[T], now : Int64) -> Taken[T] {
-  while self.free.length() > 0 {
-    let held = self.free[self.free.length() - 1]
-    let _ = self.free.pop()
-    if self.expired(held, now) {
-      // Too old to hand out. It is gone from the pool; the caller closed it when
-      // `evict` handed it over, or will when this one does.
-      continue
-    }
-    self.busy = self.busy + 1
-    return Ready(held.0)
+  match self.free.pop() {
+    Some(held) =>
+      if self.expired(held.1, held.2, now) {
+        Stale(held.0)
+      } else {
+        self.out.push((held.0, held.1))
+        Ready(held.0)
+      }
+    None =>
+      if self.limits.size <= 0 || self.live() < self.limits.size {
+        self.reserved = self.reserved + 1
+        Make
+      } else {
+        Wait
+      }
   }
-  if self.limits.size <= 0 || self.live() < self.limits.size {
-    self.busy = self.busy + 1
-    return Make
-  }
-  Wait
 }
 
 ///|
-/// Hand one back.
+/// Register a resource made after `take` said `Make`, as lent and born `now`.
+pub fn[T] Pool::made(self : Pool[T], item : T, now : Int64) -> Unit {
+  if self.reserved > 0 {
+    self.reserved = self.reserved - 1
+  }
+  self.out.push((item, now))
+}
+
+///|
+/// Say the resource `take` reserved room for could not be made, so the room is free
+/// again. Without it a factory that failed once would shrink the pool for good.
+pub fn[T] Pool::unmade(self : Pool[T]) -> Unit {
+  if self.reserved > 0 {
+    self.reserved = self.reserved - 1
+  }
+}
+
+///|
+/// Hand one back, keeping the birth it was lent with.
 ///
-/// `false` means the pool did not keep it and the caller should close it: there
-/// were already enough idle. A resource that is broken goes to [`Pool::drop`]
-/// instead, because a pool that kept it would hand it to the next caller.
+/// `false` means the pool did not keep it and the caller should close it: there were
+/// already enough idle. A resource that is broken goes to [`Pool::drop`] instead,
+/// because a pool that kept it would hand it to the next caller.
+///
+/// A resource the pool does not recognise is one made after a `Make` without
+/// [`Pool::made`] being called: it fills the room `take` reserved and is taken as
+/// born `now`.
 pub fn[T] Pool::give(self : Pool[T], item : T, now : Int64) -> Bool {
-  if self.busy > 0 {
-    self.busy = self.busy - 1
-  }
-  if self.limits.idle > 0 && self.free.length() >= self.limits.idle {
-    return false
-  }
-  self.free.push((item, now, now))
-  true
-}
-
-///|
-/// Give one back that has just been made, so its age counts from when it was made
-/// rather than from when it was first returned.
-pub fn[T] Pool::give_new(
-  self : Pool[T],
-  item : T,
-  born : Int64,
-  now : Int64,
-) -> Bool {
-  if self.busy > 0 {
-    self.busy = self.busy - 1
-  }
+  let born = self.recall(item, now)
   if self.limits.idle > 0 && self.free.length() >= self.limits.idle {
     return false
   }
@@ -170,28 +185,26 @@ pub fn[T] Pool::give_new(
 }
 
 ///|
-/// Say a checked-out resource is not coming back, because it broke.
+/// Say a lent resource is not coming back, because it broke.
 ///
 /// This is what keeps the live count honest: without it a failed connection would
 /// hold a slot for ever and the pool would stop making new ones.
-pub fn[T] Pool::drop(self : Pool[T]) -> Unit {
-  if self.busy > 0 {
-    self.busy = self.busy - 1
-  }
+pub fn[T] Pool::drop(self : Pool[T], item : T) -> Unit {
+  let _ = self.recall(item, 0L)
 }
 
 ///|
-/// Every idle resource that has sat longer than `keep` or lived longer than
-/// `life`, removed from the pool and handed back for the caller to close.
+/// Every idle resource that has sat longer than `keep` or lived longer than `life`,
+/// removed from the pool and handed back for the caller to close.
 ///
-/// Called on a timer by whoever owns the runtime. The pool does not close anything
-/// itself, so this is the only way a resource leaves it other than being taken.
+/// Called on a timer by whoever owns the runtime. `take` hands a stale one back too,
+/// so a resource is never lost for want of the timer having run.
 pub fn[T] Pool::evict(self : Pool[T], now : Int64) -> Array[T] {
-  let out : Array[T] = []
+  let gone : Array[T] = []
   let keep : Array[(T, Int64, Int64)] = []
   for held in self.free {
-    if self.expired(held, now) {
-      out.push(held.0)
+    if self.expired(held.1, held.2, now) {
+      gone.push(held.0)
     } else {
       keep.push(held)
     }
@@ -200,12 +213,13 @@ pub fn[T] Pool::evict(self : Pool[T], now : Int64) -> Array[T] {
   for held in keep {
     self.free.push(held)
   }
-  out
+  gone
 }
 
 ///|
-/// Everything the pool holds, emptied out for the caller to close — what a shutdown
-/// does.
+/// Everything the pool holds idle, emptied out for the caller to close — what a
+/// shutdown does. Lent resources are the borrowers' to return; each comes back
+/// through `give` and can be closed then.
 pub fn[T] Pool::close(self : Pool[T]) -> Array[T] {
   let out : Array[T] = []
   for held in self.free {
@@ -216,16 +230,35 @@ pub fn[T] Pool::close(self : Pool[T]) -> Array[T] {
 }
 
 ///|
-/// Whether a held resource is too old to hand out.
+/// Take a lent resource off the books, answering the birth it was lent with.
+///
+/// One the pool never lent answers `fallback` and frees a reserved room, if there is
+/// one: it is the resource a `Make` asked for, coming back without having been
+/// registered.
+fn[T] Pool::recall(self : Pool[T], item : T, fallback : Int64) -> Int64 {
+  for i = 0; i < self.out.length(); i = i + 1 {
+    if physical_equal(self.out[i].0, item) {
+      let born = self.out[i].1
+      self.out.remove(i) |> ignore
+      return born
+    }
+  }
+  self.unmade()
+  fallback
+}
+
+///|
+/// Whether a resource born at `born` and idle since `rested` is too old to hand out.
 fn[T] Pool::expired(
   self : Pool[T],
-  held : (T, Int64, Int64),
+  born : Int64,
+  rested : Int64,
   now : Int64,
 ) -> Bool {
-  if self.limits.keep.nanos > 0L && now - held.2 >= self.limits.keep.nanos {
+  if self.limits.keep.nanos > 0L && now - rested >= self.limits.keep.nanos {
     return true
   }
-  if self.limits.life.nanos > 0L && now - held.1 >= self.limits.life.nanos {
+  if self.limits.life.nanos > 0L && now - born >= self.limits.life.nanos {
     return true
   }
   false

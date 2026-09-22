@@ -1,0 +1,110 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonpool"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitstack/moondate",
+}
+
+// Values
+pub let backoff : Backoff
+
+pub let forever : @moondate.Span
+
+pub let limits : Limits
+
+// Errors
+
+// Types and methods
+pub(all) struct Backoff {
+  base : @moondate.Span
+  factor : Double
+  cap : @moondate.Span
+  attempts : Int
+  jitter : Jitter
+} derive(Eq, @debug.Debug)
+pub fn Backoff::ceiling(Self, Int) -> @moondate.Span
+pub fn Backoff::delay(Self, Int, random? : Double, previous? : @moondate.Span) -> @moondate.Span
+pub fn Backoff::equal(Self, Self) -> Bool
+pub fn Backoff::more(Self, Int) -> Bool
+pub fn Backoff::new(base? : @moondate.Span, factor? : Double, cap? : @moondate.Span, attempts? : Int, jitter? : Jitter) -> Self
+pub fn Backoff::not_equal(Self, Self) -> Bool
+pub fn Backoff::schedule(Self, randoms? : ArrayView[Double]) -> Array[@moondate.Span]
+pub fn Backoff::to_repr(Self) -> @debug.Repr
+
+pub struct Bucket {
+  rate : Double
+  burst : Double
+  mut tokens : Double
+  mut at : Int64
+}
+pub fn Bucket::new(Double, burst? : Double, at? : Int64) -> Self
+pub fn Bucket::next(Self, Int64, n? : Double) -> @moondate.Span
+pub fn Bucket::take(Self, Int64, n? : Double) -> Bool
+pub fn Bucket::tokens(Self, Int64) -> Double
+
+pub struct Gate {
+  limit : Int
+  mut held : Int
+}
+pub fn Gate::enter(Self) -> Bool
+pub fn Gate::held(Self) -> Int
+pub fn Gate::leave(Self) -> Unit
+pub fn Gate::new(Int) -> Self
+
+pub(all) enum Jitter {
+  Rigid
+  Full
+  Equal
+  Decorrelated
+} derive(Eq, @debug.Debug)
+pub fn Jitter::equal(Self, Self) -> Bool
+pub fn Jitter::not_equal(Self, Self) -> Bool
+pub fn Jitter::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Limits {
+  size : Int
+  idle : Int
+  keep : @moondate.Span
+  life : @moondate.Span
+} derive(Eq, @debug.Debug)
+pub fn Limits::equal(Self, Self) -> Bool
+pub fn Limits::new(size? : Int, idle? : Int, keep? : @moondate.Span, life? : @moondate.Span) -> Self
+pub fn Limits::not_equal(Self, Self) -> Bool
+pub fn Limits::to_repr(Self) -> @debug.Repr
+
+pub struct Pool[T] {
+  limits : Limits
+  free : Array[(T, Int64, Int64)]
+  mut busy : Int
+}
+pub fn[T] Pool::busy(Self[T]) -> Int
+pub fn[T] Pool::close(Self[T]) -> Array[T]
+pub fn[T] Pool::drop(Self[T]) -> Unit
+pub fn[T] Pool::evict(Self[T], Int64) -> Array[T]
+pub fn[T] Pool::give(Self[T], T, Int64) -> Bool
+pub fn[T] Pool::give_new(Self[T], T, Int64, Int64) -> Bool
+pub fn[T] Pool::idle(Self[T]) -> Int
+pub fn[T] Pool::live(Self[T]) -> Int
+pub fn[T] Pool::new(limits? : Limits) -> Self[T]
+pub fn[T] Pool::take(Self[T], Int64) -> Taken[T]
+
+pub(all) enum Taken[T] {
+  Ready(T)
+  Make
+  Wait
+}
+
+pub struct Window {
+  allow : Int
+  window : @moondate.Span
+  stamps : Array[Int64]
+}
+pub fn Window::left(Self, Int64) -> Int
+pub fn Window::new(Int, @moondate.Span) -> Self
+pub fn Window::next(Self, Int64) -> @moondate.Span
+pub fn Window::take(Self, Int64) -> Bool
+
+// Type aliases
+
+// Traits

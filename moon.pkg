@@ -1,0 +1,14 @@
+// Pools, backoff and flow control, with no I/O of their own.
+//
+// Each of the three answers a question and leaves the acting to the caller: which
+// resource to hand out, how long to wait before trying again, whether this request
+// is within the rate. The clock is read by the caller and passed in, and so is the
+// randomness backoff jitter needs, which is what makes every sequence here
+// reproducible in a test.
+//
+// The jitter strategies are the ones AWS's "Exponential Backoff and Jitter"
+// (https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/)
+// names and measures.
+import {
+  "moonbitstack/moondate",
+}

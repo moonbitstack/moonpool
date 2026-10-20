@@ -24,8 +24,8 @@ pub struct Bucket {
 /// smaller than one means nothing ever passes, so it is raised to one.
 pub fn Bucket::new(
   rate : Double,
-  burst? : Double = 0.0,
-  at? : Int64 = 0L,
+  burst~ : Double = 0.0,
+  at~ : Int64 = 0L,
 ) -> Bucket {
   let cap = if burst > 0.0 { burst } else if rate > 1.0 { rate } else { 1.0 }
   { rate, burst: cap, tokens: cap, at, }
@@ -33,7 +33,7 @@ pub fn Bucket::new(
 
 ///|
 /// Whether `n` tokens are available now, taking them if they are.
-pub fn Bucket::take(self : Bucket, now : Int64, n? : Double = 1.0) -> Bool {
+pub fn Bucket::take(self : Bucket, now : Int64, n~ : Double = 1.0) -> Bool {
   self.fill(now)
   if self.tokens >= n {
     self.tokens = self.tokens - n
@@ -50,7 +50,7 @@ pub fn Bucket::take(self : Bucket, now : Int64, n? : Double = 1.0) -> Bool {
 pub fn Bucket::next(
   self : Bucket,
   now : Int64,
-  n? : Double = 1.0,
+  n~ : Double = 1.0,
 ) -> @moondate.Span {
   self.fill(now)
   if self.tokens >= n {
@@ -96,14 +96,14 @@ fn Bucket::fill(self : Bucket, now : Int64) -> Unit {
 /// The stamps of the events in the window are kept, so the count is exact rather
 /// than the approximation a two-bucket scheme gives.
 pub struct Window {
-  allow : Int
+  allow : Int32
   window : @moondate.Span
   stamps : Array[Int64]
 }
 
 ///|
 /// An empty window.
-pub fn Window::new(allow : Int, window : @moondate.Span) -> Window {
+pub fn Window::new(allow : Int32, window : @moondate.Span) -> Window {
   { allow, window, stamps: [], }
 }
 
@@ -120,7 +120,7 @@ pub fn Window::take(self : Window, now : Int64) -> Bool {
 
 ///|
 /// How many events remain in the current window.
-pub fn Window::left(self : Window, now : Int64) -> Int {
+pub fn Window::left(self : Window, now : Int64) -> Int32 {
   self.forget(now)
   let used = self.stamps.length()
   if used >= self.allow {
@@ -169,13 +169,13 @@ fn Window::forget(self : Window, now : Int64) -> Unit {
 /// happening at once. A server past its limit answers rather than queues, which is
 /// what keeps a queue from becoming the outage.
 pub struct Gate {
-  limit : Int
-  mut held : Int
+  limit : Int32
+  mut held : Int32
 }
 
 ///|
 /// A gate that nothing has entered.
-pub fn Gate::new(limit : Int) -> Gate {
+pub fn Gate::new(limit : Int32) -> Gate {
   { limit, held: 0, }
 }
 
@@ -199,6 +199,6 @@ pub fn Gate::leave(self : Gate) -> Unit {
 
 ///|
 /// How many are inside.
-pub fn Gate::held(self : Gate) -> Int {
+pub fn Gate::held(self : Gate) -> Int32 {
   self.held
 }

@@ -9,7 +9,7 @@ fn ms(n : Int64) -> Int64 {
 
 ///|
 test "an empty pool says to make one, until the size is reached" {
-  let p : Pool[Int] = Pool::new(limits=Limits::new(size=2))
+  let p : Pool[Int32] = Pool::new(limits=Limits::new(size=2))
   assert_eq(p.take(0L) is Make, true)
   assert_eq(p.take(0L) is Make, true)
   // Two are out and the size is two, so there is nothing to do but wait.
@@ -21,7 +21,7 @@ test "an empty pool says to make one, until the size is reached" {
 
 ///|
 test "a returned resource is handed out again" {
-  let p : Pool[Int] = Pool::new(limits=Limits::new(size=2))
+  let p : Pool[Int32] = Pool::new(limits=Limits::new(size=2))
   let _ = p.take(0L)
   assert_eq(p.give(7, ms(1L)), true)
   assert_eq(p.idle(), 1)
@@ -36,7 +36,7 @@ test "a returned resource is handed out again" {
 
 ///|
 test "the newest is handed out first, so the oldest can age out" {
-  let p : Pool[Int] = Pool::new(limits=Limits::new(size=4))
+  let p : Pool[Int32] = Pool::new(limits=Limits::new(size=4))
   // All three are checked out first; giving one back while another is out is what
   // a pool under load actually does.
   for i = 0; i < 3; i = i + 1 {
@@ -45,7 +45,7 @@ test "the newest is handed out first, so the oldest can age out" {
   for v in [1, 2, 3] {
     let _ = p.give(v, ms(v.to_int64()))
   }
-  let got : Array[Int] = []
+  let got : Array[Int32] = []
   for i = 0; i < 3; i = i + 1 {
     match p.take(ms(10L)) {
       Ready(v) => got.push(v)
@@ -57,7 +57,7 @@ test "the newest is handed out first, so the oldest can age out" {
 
 ///|
 test "a pool full of idle resources refuses to keep another" {
-  let p : Pool[Int] = Pool::new(limits=Limits::new(size=4, idle=2))
+  let p : Pool[Int32] = Pool::new(limits=Limits::new(size=4, idle=2))
   for i = 0; i < 3; i = i + 1 {
     let _ = p.take(0L)
   }
@@ -71,7 +71,7 @@ test "a pool full of idle resources refuses to keep another" {
 
 ///|
 test "a broken resource frees its slot rather than holding it for ever" {
-  let p : Pool[Int] = Pool::new(limits=Limits::new(size=1))
+  let p : Pool[Int32] = Pool::new(limits=Limits::new(size=1))
   assert_eq(p.take(0L) is Make, true)
   assert_eq(p.take(0L) is Wait, true)
   // Without this the pool would think one is still out and never make another.
@@ -82,7 +82,7 @@ test "a broken resource frees its slot rather than holding it for ever" {
 
 ///|
 test "a resource that has sat too long is evicted" {
-  let p : Pool[Int] = Pool::new(
+  let p : Pool[Int32] = Pool::new(
     limits=Limits::new(size=4, keep=@moondate.Span::new(seconds=30L)),
   )
   let _ = p.take(0L)
@@ -98,7 +98,7 @@ test "a resource that has sat too long is evicted" {
 
 ///|
 test "a resource that has lived too long is evicted however recently it was used" {
-  let p : Pool[Int] = Pool::new(
+  let p : Pool[Int32] = Pool::new(
     limits=Limits::new(
       size=4,
       keep=@moondate.Span::new(minutes=30L),
@@ -115,7 +115,7 @@ test "a resource that has lived too long is evicted however recently it was used
 
 ///|
 test "an expired resource is not handed out, even before eviction runs" {
-  let p : Pool[Int] = Pool::new(
+  let p : Pool[Int32] = Pool::new(
     limits=Limits::new(size=4, keep=@moondate.Span::new(seconds=1L)),
   )
   let _ = p.take(0L)
@@ -133,7 +133,7 @@ test "an expired resource is not handed out, even before eviction runs" {
 
 ///|
 test "no stale resource is lost: every one taken out is handed to the caller" {
-  let p : Pool[Int] = Pool::new(
+  let p : Pool[Int32] = Pool::new(
     limits=Limits::new(size=4, keep=@moondate.Span::new(seconds=1L)),
   )
   for i = 0; i < 3; i = i + 1 {
@@ -143,7 +143,7 @@ test "no stale resource is lost: every one taken out is handed to the caller" {
     let _ = p.give(v, 0L)
   }
   // 0.1.0 skipped past these to answer `Make`, and the three were never closed.
-  let closed : Array[Int] = []
+  let closed : Array[Int32] = []
   for ;; {
     match p.take(ms(5_000L)) {
       Stale(v) => closed.push(v)
@@ -156,7 +156,7 @@ test "no stale resource is lost: every one taken out is handed to the caller" {
 
 ///|
 test "birth survives a loan, so a reused resource still retires by age" {
-  let p : Pool[Int] = Pool::new(
+  let p : Pool[Int32] = Pool::new(
     limits=Limits::new(
       size=4,
       keep=@moondate.Span::new(minutes=30L),
@@ -175,7 +175,7 @@ test "birth survives a loan, so a reused resource still retires by age" {
 
 ///|
 test "a registered resource is counted as lent until it comes back" {
-  let p : Pool[Int] = Pool::new(limits=Limits::new(size=2))
+  let p : Pool[Int32] = Pool::new(limits=Limits::new(size=2))
   assert_eq(p.take(0L) is Make, true)
   p.made(5, 0L)
   assert_eq(p.live(), 1)
@@ -187,7 +187,7 @@ test "a registered resource is counted as lent until it comes back" {
 
 ///|
 test "a resource that could not be made gives its room back" {
-  let p : Pool[Int] = Pool::new(limits=Limits::new(size=1))
+  let p : Pool[Int32] = Pool::new(limits=Limits::new(size=1))
   assert_eq(p.take(0L) is Make, true)
   assert_eq(p.take(0L) is Wait, true)
   p.unmade()
@@ -197,7 +197,7 @@ test "a resource that could not be made gives its room back" {
 
 ///|
 test "zero means no limit, for the size and for both ages" {
-  let p : Pool[Int] = Pool::new(
+  let p : Pool[Int32] = Pool::new(
     limits=Limits::new(size=0, keep=forever, life=forever),
   )
   for i = 0; i < 100; i = i + 1 {
@@ -210,7 +210,7 @@ test "zero means no limit, for the size and for both ages" {
 
 ///|
 test "closing hands everything back for the caller to close" {
-  let p : Pool[Int] = Pool::new()
+  let p : Pool[Int32] = Pool::new()
   for i = 0; i < 3; i = i + 1 {
     let _ = p.take(0L)
   }

@@ -22,8 +22,8 @@ pub(all) enum Taken[T] {
 /// The preset is [`limits`]. Build another with [`Limits::new`], or update one in
 /// place with `{ ..limits, size: 32 }`.
 pub(all) struct Limits {
-  size : Int
-  idle : Int
+  size : Int32
+  idle : Int32
   keep : @moondate.Span
   life : @moondate.Span
 } derive(Eq, Debug)
@@ -57,10 +57,10 @@ pub let limits : Limits = {
 ///|
 /// Limits by name, every knob with the preset's value.
 pub fn Limits::new(
-  size? : Int = limits.size,
-  idle? : Int = limits.idle,
-  keep? : @moondate.Span = limits.keep,
-  life? : @moondate.Span = limits.life,
+  size~ : Int32 = limits.size,
+  idle~ : Int32 = limits.idle,
+  keep~ : @moondate.Span = limits.keep,
+  life~ : @moondate.Span = limits.life,
 ) -> Limits {
   { size, idle, keep, life, }
 }
@@ -88,30 +88,30 @@ pub struct Pool[T] {
   limits : Limits
   free : Array[(T, Int64, Int64)]
   out : Array[(T, Int64)]
-  mut reserved : Int
+  mut reserved : Int32
 }
 
 ///|
 /// An empty pool.
-pub fn[T] Pool::new(limits? : Limits = limits) -> Pool[T] {
+pub fn[T] Pool::new(limits~ : Limits = limits) -> Pool[T] {
   { limits, free: [], out: [], reserved: 0, }
 }
 
 ///|
 /// How many resources exist right now: idle, lent, and being made.
-pub fn[T] Pool::live(self : Pool[T]) -> Int {
+pub fn[T] Pool::live(self : Pool[T]) -> Int32 {
   self.free.length() + self.out.length() + self.reserved
 }
 
 ///|
 /// How many are sitting idle.
-pub fn[T] Pool::idle(self : Pool[T]) -> Int {
+pub fn[T] Pool::idle(self : Pool[T]) -> Int32 {
   self.free.length()
 }
 
 ///|
 /// How many are lent out or being made.
-pub fn[T] Pool::busy(self : Pool[T]) -> Int {
+pub fn[T] Pool::busy(self : Pool[T]) -> Int32 {
   self.out.length() + self.reserved
 }
 

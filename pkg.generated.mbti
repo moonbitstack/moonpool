@@ -20,14 +20,14 @@ pub(all) struct Backoff {
   base : @moondate.Span
   factor : Double
   cap : @moondate.Span
-  attempts : Int
+  attempts : Int32
   jitter : Jitter
 } derive(Eq, @debug.Debug)
-pub fn Backoff::ceiling(Self, Int) -> @moondate.Span
-pub fn Backoff::delay(Self, Int, random? : Double, previous? : @moondate.Span) -> @moondate.Span
+pub fn Backoff::ceiling(Self, Int32) -> @moondate.Span
+pub fn Backoff::delay(Self, Int32, random? : Double, previous? : @moondate.Span) -> @moondate.Span
 pub fn Backoff::equal(Self, Self) -> Bool
-pub fn Backoff::more(Self, Int) -> Bool
-pub fn Backoff::new(base? : @moondate.Span, factor? : Double, cap? : @moondate.Span, attempts? : Int, jitter? : Jitter) -> Self
+pub fn Backoff::more(Self, Int32) -> Bool
+pub fn Backoff::new(base? : @moondate.Span, factor? : Double, cap? : @moondate.Span, attempts? : Int32, jitter? : Jitter) -> Self
 pub fn Backoff::not_equal(Self, Self) -> Bool
 pub fn Backoff::schedule(Self, randoms? : ArrayView[Double]) -> Array[@moondate.Span]
 pub fn Backoff::to_repr(Self) -> @debug.Repr
@@ -44,13 +44,13 @@ pub fn Bucket::take(Self, Int64, n? : Double) -> Bool
 pub fn Bucket::tokens(Self, Int64) -> Double
 
 pub struct Gate {
-  limit : Int
-  mut held : Int
+  limit : Int32
+  mut held : Int32
 }
 pub fn Gate::enter(Self) -> Bool
-pub fn Gate::held(Self) -> Int
+pub fn Gate::held(Self) -> Int32
 pub fn Gate::leave(Self) -> Unit
-pub fn Gate::new(Int) -> Self
+pub fn Gate::new(Int32) -> Self
 
 pub(all) enum Jitter {
   Rigid
@@ -63,13 +63,13 @@ pub fn Jitter::not_equal(Self, Self) -> Bool
 pub fn Jitter::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Limits {
-  size : Int
-  idle : Int
+  size : Int32
+  idle : Int32
   keep : @moondate.Span
   life : @moondate.Span
 } derive(Eq, @debug.Debug)
 pub fn Limits::equal(Self, Self) -> Bool
-pub fn Limits::new(size? : Int, idle? : Int, keep? : @moondate.Span, life? : @moondate.Span) -> Self
+pub fn Limits::new(size? : Int32, idle? : Int32, keep? : @moondate.Span, life? : @moondate.Span) -> Self
 pub fn Limits::not_equal(Self, Self) -> Bool
 pub fn Limits::to_repr(Self) -> @debug.Repr
 
@@ -77,15 +77,15 @@ pub struct Pool[T] {
   limits : Limits
   free : Array[(T, Int64, Int64)]
   out : Array[(T, Int64)]
-  mut reserved : Int
+  mut reserved : Int32
 }
-pub fn[T] Pool::busy(Self[T]) -> Int
+pub fn[T] Pool::busy(Self[T]) -> Int32
 pub fn[T] Pool::close(Self[T]) -> Array[T]
 pub fn[T] Pool::drop(Self[T], T) -> Unit
 pub fn[T] Pool::evict(Self[T], Int64) -> Array[T]
 pub fn[T] Pool::give(Self[T], T, Int64) -> Bool
-pub fn[T] Pool::idle(Self[T]) -> Int
-pub fn[T] Pool::live(Self[T]) -> Int
+pub fn[T] Pool::idle(Self[T]) -> Int32
+pub fn[T] Pool::live(Self[T]) -> Int32
 pub fn[T] Pool::made(Self[T], T, Int64) -> Unit
 pub fn[T] Pool::new(limits? : Limits) -> Self[T]
 pub fn[T] Pool::take(Self[T], Int64) -> Taken[T]
@@ -99,12 +99,12 @@ pub(all) enum Taken[T] {
 }
 
 pub struct Window {
-  allow : Int
+  allow : Int32
   window : @moondate.Span
   stamps : Array[Int64]
 }
-pub fn Window::left(Self, Int64) -> Int
-pub fn Window::new(Int, @moondate.Span) -> Self
+pub fn Window::left(Self, Int64) -> Int32
+pub fn Window::new(Int32, @moondate.Span) -> Self
 pub fn Window::next(Self, Int64) -> @moondate.Span
 pub fn Window::take(Self, Int64) -> Bool
 

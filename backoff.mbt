@@ -36,7 +36,7 @@ pub(all) struct Backoff {
   base : @moondate.Span
   factor : Double
   cap : @moondate.Span
-  attempts : Int
+  attempts : Int32
   jitter : Jitter
 } derive(Eq, Debug)
 
@@ -64,11 +64,11 @@ pub let backoff : Backoff = {
 ///|
 /// A backoff by name, every knob with the preset's value.
 pub fn Backoff::new(
-  base? : @moondate.Span = backoff.base,
-  factor? : Double = backoff.factor,
-  cap? : @moondate.Span = backoff.cap,
-  attempts? : Int = backoff.attempts,
-  jitter? : Jitter = backoff.jitter,
+  base~ : @moondate.Span = backoff.base,
+  factor~ : Double = backoff.factor,
+  cap~ : @moondate.Span = backoff.cap,
+  attempts~ : Int32 = backoff.attempts,
+  jitter~ : Jitter = backoff.jitter,
 ) -> Backoff {
   { base, factor, cap, attempts, jitter, }
 }
@@ -77,7 +77,7 @@ pub fn Backoff::new(
 /// Whether a call that has made `made` attempts may make another.
 ///
 /// The first attempt is 1, so a policy of three attempts allows two retries.
-pub fn Backoff::more(self : Backoff, made : Int) -> Bool {
+pub fn Backoff::more(self : Backoff, made : Int32) -> Bool {
   made < self.attempts && made >= 0
 }
 
@@ -88,7 +88,7 @@ pub fn Backoff::more(self : Backoff, made : Int) -> Bool {
 /// This is what a jitter-free client sleeps and what every other strategy draws
 /// within, so it is public: a caller comparing this library against a policy
 /// written elsewhere compares this.
-pub fn Backoff::ceiling(self : Backoff, retry : Int) -> @moondate.Span {
+pub fn Backoff::ceiling(self : Backoff, retry : Int32) -> @moondate.Span {
   if retry < 1 {
     return @moondate.Span::new()
   }
@@ -115,9 +115,9 @@ pub fn Backoff::ceiling(self : Backoff, retry : Int) -> @moondate.Span {
 /// reads — it grows from where it landed rather than from the attempt number.
 pub fn Backoff::delay(
   self : Backoff,
-  retry : Int,
-  random? : Double = 0.0,
-  previous? : @moondate.Span = @moondate.Span::new(),
+  retry : Int32,
+  random~ : Double = 0.0,
+  previous~ : @moondate.Span = @moondate.Span::new(),
 ) -> @moondate.Span {
   let ceiling = self.ceiling(retry)
   match self.jitter {
@@ -152,7 +152,7 @@ pub fn Backoff::delay(
 /// which is the low end of whatever strategy is in force.
 pub fn Backoff::schedule(
   self : Backoff,
-  randoms? : ArrayView[Double] = [][:],
+  randoms~ : ArrayView[Double] = [][:],
 ) -> Array[@moondate.Span] {
   let out : Array[@moondate.Span] = []
   let mut previous = @moondate.Span::new()

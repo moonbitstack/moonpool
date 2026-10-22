@@ -9,11 +9,18 @@
 /// another, and reserving it; `Wait` is it saying there is not, and the caller's
 /// queue decides what that means. `Stale` is an idle resource too old to use, handed
 /// back so the caller can close it before asking again.
+///
+/// The last two come only from a [`Ward`]: `Later` is making held back for that
+/// long, by the bucket or by backoff after a failure; `Shed` is the breaker
+/// refusing new connections to a failing backend, or the shedder refusing to lend
+/// while the process is overloaded.
 pub(all) enum Taken[T] {
   Ready(T)
   Stale(T)
   Make
   Wait
+  Later(@moondate.Span)
+  Shed
 }
 
 ///|
@@ -65,10 +72,33 @@ pub fn Limits::new(
   { size, idle, keep, life, }
 }
 
-// One resource the pool holds idle, as `(item, born, rested)`, and one it has lent,
-// as `(item, born)`. Tuples rather than named types because a named private one
-// cannot appear in a public struct's fields, and these are nobody's business outside
-// this file.
+///|
+/// What stands in front of a pool's backend. Every part is optional and the
+/// preset has none, which leaves the pool exactly as it is without a ward.
+pub(all) struct Ward {
+  breaker : @moonward.Breaker?
+  bucket : @moonward.Bucket?
+  backoff : @moonward.Backoff?
+  shedder : @moonward.Shedder?
+}
+
+///|
+pub let ward : Ward = {
+  breaker: None,
+  bucket: None,
+  backoff: None,
+  shedder: None,
+}
+
+///|
+pub fn Ward::new(
+  breaker? : @moonward.Breaker,
+  bucket? : @moonward.Bucket,
+  backoff? : @moonward.Backoff,
+  shedder? : @moonward.Shedder,
+) -> Ward {
+  { breaker, bucket, backoff, shedder, }
+}
 
 ///|
 /// The bookkeeping of holding a limited number of things.
@@ -84,23 +114,30 @@ pub fn Limits::new(
 /// A lent resource is recognised on its way back by identity, which is what every
 /// connection handle has. That is how its birth survives the loan: a pool that
 /// stamped a returned resource as new would never retire one by age, however old.
-pub struct Pool[T] {
+///
+/// Idle resources are kept as `(item, born, rested)`, lent ones as `(item, born,
+/// ticket)`, and each resource being made as the breaker's promise and the
+/// shedder's ticket it will settle.
+struct Pool[T] {
   limits : Limits
+  ward : Ward
   free : Array[(T, Int64, Int64)]
-  out : Array[(T, Int64)]
-  mut reserved : Int32
+  out : Array[(T, Int64, @moonward.Ticket?)]
+  making : Array[(@moonward.Promise?, @moonward.Ticket?)]
+  mut failures : Int32
+  mut hold : Int64
 }
 
 ///|
 /// An empty pool.
-pub fn[T] Pool::new(limits~ : Limits = limits) -> Pool[T] {
-  { limits, free: [], out: [], reserved: 0, }
+pub fn[T] Pool::new(limits~ : Limits = limits, ward~ : Ward = ward) -> Pool[T] {
+  { limits, ward, free: [], out: [], making: [], failures: 0, hold: 0L, }
 }
 
 ///|
 /// How many resources exist right now: idle, lent, and being made.
 pub fn[T] Pool::live(self : Pool[T]) -> Int32 {
-  self.free.length() + self.out.length() + self.reserved
+  self.free.length() + self.out.length() + self.making.length()
 }
 
 ///|
@@ -112,7 +149,7 @@ pub fn[T] Pool::idle(self : Pool[T]) -> Int32 {
 ///|
 /// How many are lent out or being made.
 pub fn[T] Pool::busy(self : Pool[T]) -> Int32 {
-  self.out.length() + self.reserved
+  self.out.length() + self.making.length()
 }
 
 ///|
@@ -128,40 +165,99 @@ pub fn[T] Pool::busy(self : Pool[T]) -> Int32 {
 /// of the count; the caller closes it and takes again. Handing it back rather than
 /// dropping it is the point — a pool that discarded it silently would leak whatever
 /// it holds whenever the eviction timer had not run first.
-pub fn[T] Pool::take(self : Pool[T], now : Int64) -> Taken[T] {
-  match self.free.pop() {
-    Some(held) =>
-      if self.expired(held.1, held.2, now) {
-        Stale(held.0)
-      } else {
-        self.out.push((held.0, held.1))
-        Ready(held.0)
-      }
-    None =>
-      if self.limits.size <= 0 || self.live() < self.limits.size {
-        self.reserved = self.reserved + 1
-        Make
-      } else {
-        Wait
-      }
+pub fn[T] Pool::take(
+  self : Pool[T],
+  now : Int64,
+  roll~ : Double = 0.5,
+  cpu~ : Int32 = 0,
+) -> Taken[T] {
+  if self.free.last() is Some(held) && self.expired(held.1, held.2, now) {
+    self.free.pop() |> ignore
+    return Stale(held.0)
   }
+  let ticket = match self.ward.shedder {
+    Some(shedder) =>
+      match shedder.allow(now, cpu) {
+        Some(ticket) => Some(ticket)
+        None => return Shed
+      }
+    None => None
+  }
+  if self.free.pop() is Some(held) {
+    self.out.push((held.0, held.1, ticket))
+    return Ready(held.0)
+  }
+  let refuse = (taken : Taken[T]) => {
+    if ticket is Some(t) {
+      t.fail()
+    }
+    taken
+  }
+  if self.limits.size > 0 && self.live() >= self.limits.size {
+    return refuse(Wait)
+  }
+  if now < self.hold {
+    return refuse(Later({ nanos: self.hold - now, }))
+  }
+  if self.ward.bucket is Some(bucket) && !bucket.take(now) {
+    return refuse(Later(bucket.next(now)))
+  }
+  let promise = match self.ward.breaker {
+    Some(breaker) =>
+      match breaker.allow(now, roll) {
+        Some(promise) => Some(promise)
+        None => return refuse(Shed)
+      }
+    None => None
+  }
+  self.making.push((promise, ticket))
+  Make
 }
 
 ///|
 /// Register a resource made after `take` said `Make`, as lent and born `now`.
 pub fn[T] Pool::made(self : Pool[T], item : T, now : Int64) -> Unit {
-  if self.reserved > 0 {
-    self.reserved = self.reserved - 1
+  let (promise, ticket) = self.reservation()
+  if promise is Some(p) {
+    p.pass(now)
   }
-  self.out.push((item, now))
+  self.failures = 0
+  self.hold = 0L
+  self.out.push((item, now, ticket))
 }
 
 ///|
-/// Say the resource `take` reserved room for could not be made, so the room is free
-/// again. Without it a factory that failed once would shrink the pool for good.
-pub fn[T] Pool::unmade(self : Pool[T]) -> Unit {
-  if self.reserved > 0 {
-    self.reserved = self.reserved - 1
+/// Give back a reservation that did not become a resource: the attempt to make
+/// it failed. The breaker counts the failure, and with a `Backoff` in the ward
+/// no `Make` is handed out again until its delay has passed; `roll` draws the
+/// jitter.
+pub fn[T] Pool::unmade(
+  self : Pool[T],
+  now : Int64,
+  roll~ : Double = 0.5,
+) -> Unit {
+  let (promise, ticket) = self.reservation()
+  if promise is Some(p) {
+    p.fail(now)
+  }
+  if ticket is Some(t) {
+    t.fail()
+  }
+  self.failures += 1
+  if self.ward.backoff is Some(backoff) {
+    self.hold = now + backoff.delay(self.failures, random=roll).nanos
+  }
+}
+
+///|
+/// The oldest reservation, or nothing to settle when there is none.
+fn[T] Pool::reservation(
+  self : Pool[T],
+) -> (@moonward.Promise?, @moonward.Ticket?) {
+  if self.making.length() == 0 {
+    (None, None)
+  } else {
+    self.making.remove(0)
   }
 }
 
@@ -176,7 +272,10 @@ pub fn[T] Pool::unmade(self : Pool[T]) -> Unit {
 /// [`Pool::made`] being called: it fills the room `take` reserved and is taken as
 /// born `now`.
 pub fn[T] Pool::give(self : Pool[T], item : T, now : Int64) -> Bool {
-  let born = self.recall(item, now)
+  let (born, ticket) = self.recall(item, now)
+  if ticket is Some(t) {
+    t.pass(now)
+  }
   if self.limits.idle > 0 && self.free.length() >= self.limits.idle {
     return false
   }
@@ -190,7 +289,9 @@ pub fn[T] Pool::give(self : Pool[T], item : T, now : Int64) -> Bool {
 /// This is what keeps the live count honest: without it a failed connection would
 /// hold a slot for ever and the pool would stop making new ones.
 pub fn[T] Pool::drop(self : Pool[T], item : T) -> Unit {
-  let _ = self.recall(item, 0L)
+  if self.recall(item, 0L).1 is Some(t) {
+    t.fail()
+  }
 }
 
 ///|
@@ -235,16 +336,18 @@ pub fn[T] Pool::close(self : Pool[T]) -> Array[T] {
 /// One the pool never lent answers `fallback` and frees a reserved room, if there is
 /// one: it is the resource a `Make` asked for, coming back without having been
 /// registered.
-fn[T] Pool::recall(self : Pool[T], item : T, fallback : Int64) -> Int64 {
-  for i = 0; i < self.out.length(); i = i + 1 {
-    if physical_equal(self.out[i].0, item) {
-      let born = self.out[i].1
+fn[T] Pool::recall(
+  self : Pool[T],
+  item : T,
+  fallback : Int64,
+) -> (Int64, @moonward.Ticket?) {
+  for i, lent in self.out {
+    if physical_equal(lent.0, item) {
       self.out.remove(i) |> ignore
-      return born
+      return (lent.1, lent.2)
     }
   }
-  self.unmade()
-  fallback
+  (fallback, self.reservation().1)
 }
 
 ///|

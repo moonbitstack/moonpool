@@ -190,7 +190,7 @@ test "a resource that could not be made gives its room back" {
   let p : Pool[Int32] = Pool::new(limits=Limits::new(size=1))
   assert_eq(p.take(0L) is Make, true)
   assert_eq(p.take(0L) is Wait, true)
-  p.unmade()
+  p.unmade(0L)
   assert_eq(p.live(), 0)
   assert_eq(p.take(0L) is Make, true)
 }

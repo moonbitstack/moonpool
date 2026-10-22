@@ -1,106 +1,69 @@
 # moonpool
 
-Resource pools, backoff and flow control. Three kinds of bookkeeping that every
-client and every server writes, and that everyone writes slightly differently.
+Resource pools for MoonBit: which resource to hand out, when to make another, and which to let go. A ward of [moonward](https://github.com/moonbitstack/moonward)'s parts can stand in front of the backend: a breaker that stops new connections to a failing backend, a token bucket that spaces them out, backoff after a failed one, and a shedder that stops lending while the process is overloaded.
 
 ```moonbit
-// A pool that hands out what it has and says when to make or wait for more.
-let pool : @moonpool.Pool[Conn] = @moonpool.Pool::new(
+let pool : @moonpool.Pool[Int32] = @moonpool.Pool::new(
   limits=@moonpool.Limits::new(size=20),
+  ward=@moonpool.Ward::new(
+    breaker=@moonward.Breaker::new(),
+    backoff=@moonward.backoff,
+  ),
 )
-match pool.take(now) {
-  Ready(conn) => use(conn)
-  Stale(conn) => close(conn) // too old to use; take again
-  Make => {
-    let conn = open()
-    pool.made(conn, now)
-    use(conn)
-  }
-  Wait => queue()
+let now = 0L
+match pool.take(now, roll=0.42) {
+  Ready(conn) => ignore(pool.give(conn, now)) // use it, then give it back
+  Stale(conn) => ignore(conn) // too old to use: close it and take again
+  Make => pool.made(1, now) // open one, or call pool.unmade(now) if that fails
+  Wait => () // all in use: queue the caller
+  Later(wait) => ignore(wait) // making is held back this long
+  Shed => () // fail fast: the backend is refusing, or this process is overloaded
 }
-pool.give(conn, now) // or pool.drop(conn) when it broke
-
-// A retry policy that says how long to wait, and when to stop.
-let policy = @moonpool.Backoff::new(attempts=5)
-if policy.more(tries) { sleep(policy.delay(tries, random=draw())) }
-
-// A rate limit, a quota and a concurrency limit.
-@moonpool.Bucket::new(100.0, burst=200.0).take(now)
-@moonpool.Window::new(1000, @moondate.Span::new(days=1L)).take(now)
-@moonpool.Gate::new(64).enter()
 ```
 
 ## No I/O, and that is the point
 
-Nothing here opens, closes, sleeps or reads a clock. The pool says *what* to do with
-a resource and the caller does it; the backoff says *how long* and the caller sleeps
-it; the limiter says *whether* and the caller answers. Time is passed in as whatever
-the caller's own clock read, in nanoseconds.
-
-That is not purity for its own sake. It is what makes every sequence here
-reproducible: a test drives a pool through an hour in three lines, and a retry
-schedule with the same draws is the same schedule twice. A library that read the
-clock itself could only be tested by waiting.
+Nothing here opens, closes, sleeps or reads a clock. The pool says what to do with a resource and the caller does it. Time is whatever the caller's clock reads, in nanoseconds; `roll` is a draw from `[0, 1)` for the breaker and for backoff jitter; `cpu` is the processor load in thousandths, for the shedder. Passing all three in is what makes every sequence reproducible: a test drives a pool through an hour in a few lines.
 
 ## The pieces
 
 | | What it answers |
 |:--:|:--|
 | `Pool[T]` | Which resource to hand out, whether to make another, which have sat or lived long enough to let go |
-| `Backoff` | How long before the next try, and whether there should be one |
-| `Bucket` | Whether this request is within a rate, and how long until it would be |
-| `Window` | Whether it is within a quota — a thousand a day is a window, not a rate |
-| `Gate` | Whether there is room right now, which has nothing to do with time |
+| `Ward` | What stands in front of the backend; every part optional, the preset `ward` has none |
+| `pick` | Which of several pools to one service to take from: two drawn at random, the one whose breaker refuses less, then the one with fewer in use |
+| `Backoff`, `Bucket`, `Gate`, `Sliding` | Re-exported from moonward, where they now live |
+
+## What a ward does
+
+| Part | When | Answer |
+|:--:|:--|:--|
+| shedder | before lending at all | `Shed` while the process is hot and has more in flight than it has shown it can finish |
+| backoff | before making, after a failed `make` | `Later(span)` until the delay has passed; the delay grows with each failure in a row |
+| bucket | before making | `Later(span)` until the bucket has a token, so reconnections do not arrive at once |
+| breaker | before making | `Shed` with the probability the breaker gives a failing backend |
+
+`made` tells the breaker a connection succeeded and clears the backoff; `unmade` tells it one failed. The shedder treats a lent resource as a call in flight and the time from `take` to `give` as its response time, which is what go-zero's adaptive shedder measures.
 
 ## The defaults, and where they come from
 
-`Limits`: ten live, ten idle, thirty minutes before an idle one is dropped, no
-maximum age. Ten is HikariCP's and Go's `database/sql` default; keeping `idle` equal
-to `size` is `database/sql`'s behaviour, so a pool that grew under load does not
-immediately throw the connections away.
-
-`Backoff`: three attempts, 100 ms doubling to a 1 s ceiling, full jitter. Those are
-gRPC's documented retry defaults, and gRPC sleeps a value drawn uniformly from
-`[0, cap]`, which is what full jitter is.
-
-The four jitter strategies are the ones AWS's *Exponential Backoff and Jitter*
-names and measures. `Full` is the default because that article's own measurements
-put it ahead; `Rigid` exists because a policy written elsewhere may specify no
-jitter, and comparing against it needs the undelayed value, which `Backoff::ceiling`
-gives.
+`Limits`: ten live, ten idle, thirty minutes before an idle one is dropped, no maximum age. Ten is HikariCP's and Go's `database/sql` default; keeping `idle` equal to `size` is `database/sql`'s behaviour, so a pool that grew under load does not immediately throw the connections away. The ward's parts carry moonward's presets, which are go-zero's and gRPC's.
 
 ## A note on the newest-first order
 
-A pool hands out the most recently returned resource, not the oldest. A warm
-connection is likelier to still be good, and handing out the newest lets the oldest
-age past `keep` and be evicted — which is how a pool shrinks again after a burst.
-A queue would keep every connection just warm enough never to be collected.
+A pool hands out the most recently returned resource, not the oldest. A warm connection is likelier to still be good, and handing out the newest lets the oldest age past `keep` and be evicted, which is how a pool shrinks again after a burst.
 
 ## A resource is never lost, and never younger than it is
 
-`take` hands an idle resource that is past its age back as `Stale` rather than
-skipping it, so the caller closes it whether or not the eviction timer has run.
-And the pool remembers when each lent resource was made, recognising it by identity
-on the way back, so `give` does not reset its age and `life` retires a connection
-that has been reused all along. A resource returned without having been registered
-by `made` is taken as born when it comes back.
-
-Both were wrong in 0.1.0: an expired resource that `take` came across was dropped
-without the caller ever seeing it, and every `give` stamped the resource as new.
-
-## One package, not three
-
-The plan for this repository had `pool`, `retry` and `flow` as separate packages.
-They are one, because splitting a package is worth doing when it lets a caller carry
-one dependency fewer, and none of the three brings a dependency the others do not.
-Splitting for tidiness is a ceremony; `moonlog` made the same call for the same
-reason.
+`take` hands an idle resource that is past its age back as `Stale` rather than skipping it, so the caller closes it whether or not the eviction timer has run. The pool remembers when each lent resource was made, recognising it by identity on the way back, so `give` does not reset its age and `life` retires a connection that has been reused all along.
 
 ## Install
 
 ```bash
 moon add moonbitstack/moonpool
 ```
+
+A ward's parts come from moonward, so a pool with a ward needs `moon add moonbitstack/moonward` as well.
 
 ## Licence
 

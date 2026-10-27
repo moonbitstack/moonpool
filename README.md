@@ -79,7 +79,7 @@ moon add moonbitstack/moonpool
 ## See it run
 
 ```bash
-moon run examples/sim
+moon run src/examples/sim
 ```
 
 A synthetic client drives a real pool for twenty-four seconds and prints one row a second:

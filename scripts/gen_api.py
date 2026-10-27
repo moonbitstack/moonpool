@@ -12,6 +12,7 @@ import pathlib
 import re
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+SRC = ROOT / "src"
 PKG = "moonpool"
 ROUTE = "moonbitstack/moonpool"
 INTRO = (
@@ -33,7 +34,7 @@ TRAIT_METHODS = re.compile(
 def docs_of(folder):
     """Doc comments by declared name, and inline `//` notes by `Enum.Variant`."""
     out = {}
-    for path in sorted((ROOT / folder).glob("*.mbt")):
+    for path in sorted((SRC / folder).glob("*.mbt")):
         if path.name.endswith("_test.mbt"):
             continue
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -69,7 +70,7 @@ def docs_of(folder):
 
 
 def items_of(folder):
-    lines = (ROOT / folder / "pkg.generated.mbti").read_text(encoding="utf-8").splitlines()
+    lines = (SRC / folder / "pkg.generated.mbti").read_text(encoding="utf-8").splitlines()
     items, block = [], None
     for line in lines:
         if block is not None:

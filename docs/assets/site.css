@@ -669,7 +669,9 @@ footer.site { border-top: 2px solid var(--ink); padding: 1.8rem 0 2.4rem; margin
   .figures div:nth-child(-n+2) { border-top: 0; }
   .figures div:nth-child(odd) { border-left: 0; }
   .sim-controls { grid-template-columns: 1fr; }
-  .nav { font-size: 0.66rem; }
+  .bar { gap: .5rem; }
+  .nav { font-size: 0.66rem; letter-spacing: 0.02em; }
+  .nav a { padding: 0.34rem 0.32rem; }
   .brand-name { font-size: 1.08rem; }
 }
 
@@ -678,3 +680,5 @@ footer.site { border-top: 2px solid var(--ink); padding: 1.8rem 0 2.4rem; margin
   .lane::before { transition: none; }
   .btn:hover, .linkcard:hover { transform: none; }
 }
+
+html, button, input, textarea, select { font-variant-ligatures: no-contextual; }

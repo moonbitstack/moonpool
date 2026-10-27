@@ -254,7 +254,7 @@ code {
 .cmd code { background: none; border: 0; padding: 0; color: var(--ink); }
 .cmd button {
   font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase;
-  border: 1px solid var(--line-2); background: var(--paper); color: var(--ink-3);
+  border: 1px solid var(--line-2); background: var(--paper); color: var(--ink-2);
   padding: 0.16rem 0.4rem; cursor: pointer;
 }
 .cmd button:hover { color: var(--ink); }
@@ -459,7 +459,7 @@ td.mono, th.mono { font-family: var(--mono); font-size: 0.82rem; }
 .check { display: flex; align-items: center; gap: 0.45rem; font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
 
 .chart { display: block; width: 100%; height: auto; }
-.chart text { font-family: var(--mono); font-size: 9px; fill: var(--ink-3); }
+.chart text { font-family: var(--mono); font-size: 11px; fill: var(--ink-3); }
 .chart .grid-line { stroke: var(--line); stroke-width: 1; }
 .chart .busy-area { fill: color-mix(in oklab, var(--lane) 78%, transparent); }
 .chart .idle-area { fill: color-mix(in oklab, var(--lane-2) 30%, transparent); }
@@ -565,9 +565,15 @@ footer.site { border-top: 2px solid var(--ink); padding: 1.8rem 0 2.4rem; margin
   .figures div { border-left: 0; border-top: 1px solid var(--line); }
   .figures div:nth-child(-n+2) { border-top: 0; }
   .doc { grid-template-columns: minmax(0, 1fr); gap: 1.2rem; padding-top: 1.2rem; }
-  .toc { position: static; display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; border-top: 2px solid var(--ink); }
-  .toc p { width: 100%; }
-  .toc a { border-bottom: 0; }
+  .toc { position: static; display: flex; flex-wrap: wrap; gap: 0.3rem; border-top: 2px solid var(--ink); padding-top: 0.6rem; }
+  .toc p { width: 100%; margin-bottom: 0.1rem; }
+  .toc a {
+    border: 1px solid var(--line-2);
+    background: var(--card);
+    padding: 0.28rem 0.5rem;
+    font-size: 0.72rem;
+  }
+  .toc a:hover { border-color: var(--ink); }
   .api { grid-template-columns: minmax(0, 1fr); }
   .api-nav { position: static; max-height: none; border-bottom: 1px solid var(--line); padding-bottom: 0.7rem; }
   .api-nav h4 { display: none; }
@@ -582,9 +588,11 @@ footer.site { border-top: 2px solid var(--ink); padding: 1.8rem 0 2.4rem; margin
 }
 
 @media (width <= 520px) {
-  .figures { grid-template-columns: 1fr; }
+  .laneboard-head span:last-child { display: none; }
+  .figures { grid-template-columns: repeat(2, 1fr); }
   .figures div { border-top: 1px solid var(--line); }
-  .figures div:first-child { border-top: 0; }
+  .figures div:nth-child(-n+2) { border-top: 0; }
+  .figures div:nth-child(odd) { border-left: 0; }
   .sim-controls { grid-template-columns: 1fr; }
   .nav { font-size: 0.66rem; }
   .brand-name { font-size: 1.08rem; }

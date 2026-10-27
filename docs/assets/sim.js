@@ -51,8 +51,11 @@ function spec(cfg) {
 function drawChart(trace) {
   const svg = document.getElementById("chart");
   if (!svg) return;
-  const W = 900;
-  const H = 300;
+  // A narrower box on a phone, so the axis type stays readable when the SVG is
+  // scaled down to the column.
+  const narrow = window.innerWidth < 700;
+  const W = narrow ? 560 : 900;
+  const H = narrow ? 260 : 300;
   const padL = 34;
   const padB = 24;
   const padT = 12;

@@ -488,7 +488,12 @@ td.mono, th.mono { font-family: var(--mono); font-size: 0.82rem; }
   background: var(--rope);
 }
 /* On a filled button the dashes sit outside it, on the paper. */
-.btn.launch::before, .btn.launch::after { background: var(--ink); opacity: 0.5; top: auto; bottom: auto; }
+.btn.launch::before, .btn.launch::after {
+  background: color-mix(in oklab, var(--ink) 55%, transparent);
+  opacity: 1;
+  top: auto;
+  bottom: auto;
+}
 .btn.launch::before { top: -9px; }
 .btn.launch::after { bottom: -9px; }
 .btn.launch:hover::before, .btn.launch:hover::after,

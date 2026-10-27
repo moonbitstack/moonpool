@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API reference — moonpool</title>
+<meta name="description" content="Every public type, method and value of moonpool, with the note that ships beside it.">
+<meta name="theme-color" content="#f2eee3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a141d" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+<script src="assets/site.js" defer></script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f2eee3'/%3E%3Crect y='13' width='32' height='6' fill='%23124d76'/%3E%3Crect y='15' width='32' height='2' fill='%23c9402b'/%3E%3C/svg%3E">
+</head>
+<body hx-boost="true" hx-target="#main" hx-select="#main" hx-swap="innerHTML show:window:top">
+
+<header class="topbar">
+  <div class="wrap bar">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">moonpool</span>
+      <span class="brand-sub">resource pools</span>
+    </a>
+    <nav class="nav" aria-label="Site">
+      <a href="./guide.html">Guide</a>
+      <a href="./api.html" aria-current="page">API</a>
+      <a href="./sim.html">Simulator</a>
+      <a class="gh" href="https://github.com/moonbitstack/moonpool" aria-label="Source on GitHub" title="Source on GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
+      <button class="themebtn" type="button" aria-label="Switch theme">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap api">
+
+  <aside class="api-nav" aria-label="Contents">
+    <h4>Values</h4><ol>
+<li><a href="#pool-backoff">backoff</a></li>
+<li><a href="#pool-forever">forever</a></li>
+<li><a href="#pool-limits">limits</a></li>
+<li><a href="#pool-ward">ward</a></li>
+</ol>
+<h4>Types</h4><ol>
+<li><a href="#pool-Limits">Limits</a><ol class="sub">
+<li><a href="#pool-Limits-new">new</a></li>
+</ol></li>
+<li><a href="#pool-Pool">Pool</a><ol class="sub">
+<li><a href="#pool-Pool-busy">busy</a></li>
+<li><a href="#pool-Pool-close">close</a></li>
+<li><a href="#pool-Pool-drop">drop</a></li>
+<li><a href="#pool-Pool-evict">evict</a></li>
+<li><a href="#pool-Pool-give">give</a></li>
+<li><a href="#pool-Pool-idle">idle</a></li>
+<li><a href="#pool-Pool-live">live</a></li>
+<li><a href="#pool-Pool-made">made</a></li>
+<li><a href="#pool-Pool-new">new</a></li>
+<li><a href="#pool-Pool-refusal">refusal</a></li>
+<li><a href="#pool-Pool-take">take</a></li>
+<li><a href="#pool-Pool-unmade">unmade</a></li>
+</ol></li>
+<li><a href="#pool-Taken">Taken</a><ol class="sub">
+</ol></li>
+<li><a href="#pool-Ward">Ward</a><ol class="sub">
+<li><a href="#pool-Ward-new">new</a></li>
+</ol></li>
+</ol>
+<h4>Functions</h4><ol>
+<li><a href="#pool-pick">pick</a></li>
+</ol>
+<h4>Re-exported</h4><ol>
+<li><a href="#pool-Backoff">Backoff</a></li>
+<li><a href="#pool-Bucket">Bucket</a></li>
+<li><a href="#pool-Gate">Gate</a></li>
+<li><a href="#pool-Jitter">Jitter</a></li>
+<li><a href="#pool-Sliding">Sliding</a></li>
+</ol>
+  </aside>
+
+  <div class="api-body">
+    <header class="chapter" style="padding-bottom:1.1rem">
+      <p class="eyebrow">Reference</p>
+      <h1 style="font-size:clamp(2rem,4vw,3rem);margin-bottom:0.6rem">API</h1>
+      <p class="lede">
+        Every public type, method and value of the package. A signature is what the compiler
+        reports, and the note under it is the one written beside the code.
+      </p>
+      <p class="tiny dim" style="margin-top:0.7rem">1 package · 28 public items</p>
+    </header>
+
+    <div class="api-filter">
+      <input id="api-filter" type="search" placeholder="filter by name" aria-label="Filter entries by name" autocomplete="off" spellcheck="false">
+      <span class="count" id="api-count" aria-live="polite"></span>
+    </div>
+
+    <section class="band" id="pool-top">
+<div class="band-head"><h2>moonpool</h2><span class="route">moonbitstack/moonpool</span></div>
+<p>A pool of resources with no I/O of its own: it says which resource to hand out, whether to make another, which to let go, and when to refuse, and leaves the acting to the caller.</p>
+<h4 class="group">Values</h4>
+<div class="entry" id="pool-backoff">
+<h3><span class="kind">let</span>backoff</h3>
+
+<pre class="sig">pub let backoff : @moonward.Backoff</pre>
+</div>
+<div class="entry" id="pool-forever">
+<h3><span class="kind">let</span>forever</h3>
+<p>A span meaning "no limit", which is what zero is taken to mean for the two ages: a resource with no maximum age is never too old.</p>
+<pre class="sig">pub let forever : @moondate.Span</pre>
+</div>
+<div class="entry" id="pool-limits">
+<h3><span class="kind">let</span>limits</h3>
+<p>The preset: ten live at once, ten of them allowed to sit idle, discarded after thirty minutes idle and never by age. Ten live is what most services settle on, and thirty minutes is long enough that a warm pool survives a quiet spell. Keeping <code>idle</code> equal to <code>size</code> means a pool that grew under load does not immediately throw away what it just made.</p>
+<pre class="sig">pub let limits : Limits</pre>
+</div>
+<div class="entry" id="pool-ward">
+<h3><span class="kind">let</span>ward</h3>
+
+<pre class="sig">pub let ward : Ward</pre>
+</div>
+<h4 class="group">Types</h4>
+<div class="entry" id="pool-Limits">
+<h3><span class="kind ty">struct</span>Limits</h3>
+<p>The limits a pool holds itself to. The preset is limits. Build another with Limits::new, or update one in place with <code>{ ..limits, size: 32 }</code>.</p>
+<pre class="sig">pub(all) struct Limits {</pre>
+<ul class="variants"><li>size : Int32</li><li>idle : Int32</li><li>keep : @moondate.Span</li><li>life : @moondate.Span</li></ul>
+</div>
+<div class="entry" id="pool-Limits-new">
+<h3><span class="kind">fn</span>Limits::new</h3>
+<p>Limits by name, every knob with the preset's value.</p>
+<pre class="sig">pub fn Limits::new(size? : Int32, idle? : Int32, keep? : @moondate.Span, life? : @moondate.Span) -&gt; Self</pre>
+</div>
+<div class="entry" id="pool-Pool">
+<h3><span class="kind er">opaque</span>Pool</h3>
+<p>The bookkeeping of holding a limited number of things. It does not open, close, or wait — a caller with a runtime does all three. What it knows is how many are live, which are idle, which are lent and since when each was made, and which have sat or lived long enough to be let go. Time is passed in as whatever the caller's clock reads, in nanoseconds; the value's origin does not matter because only differences are used. That is what makes a test drive a pool through an hour in three lines. A lent resource is recognised on its way back by identity, which is what every connection handle has. That is how its birth survives the loan: a pool that stamped a returned resource as new would never retire one by age, however old. Idle resources are kept as <code>(item, born, rested)</code>, lent ones as <code>(item, born, ticket)</code>, and each resource being made as the breaker's promise and the shedder's ticket it will settle.</p>
+<pre class="sig">type Pool[T]</pre>
+</div>
+<div class="entry" id="pool-Pool-busy">
+<h3><span class="kind">fn</span>Pool::busy</h3>
+
+<pre class="sig">pub fn[T] Pool::busy(Self[T]) -&gt; Int32</pre>
+</div>
+<div class="entry" id="pool-Pool-close">
+<h3><span class="kind">fn</span>Pool::close</h3>
+
+<pre class="sig">pub fn[T] Pool::close(Self[T]) -&gt; Array[T]</pre>
+</div>
+<div class="entry" id="pool-Pool-drop">
+<h3><span class="kind">fn</span>Pool::drop</h3>
+
+<pre class="sig">pub fn[T] Pool::drop(Self[T], T) -&gt; Unit</pre>
+</div>
+<div class="entry" id="pool-Pool-evict">
+<h3><span class="kind">fn</span>Pool::evict</h3>
+
+<pre class="sig">pub fn[T] Pool::evict(Self[T], Int64) -&gt; Array[T]</pre>
+</div>
+<div class="entry" id="pool-Pool-give">
+<h3><span class="kind">fn</span>Pool::give</h3>
+
+<pre class="sig">pub fn[T] Pool::give(Self[T], T, Int64) -&gt; Bool</pre>
+</div>
+<div class="entry" id="pool-Pool-idle">
+<h3><span class="kind">fn</span>Pool::idle</h3>
+
+<pre class="sig">pub fn[T] Pool::idle(Self[T]) -&gt; Int32</pre>
+</div>
+<div class="entry" id="pool-Pool-live">
+<h3><span class="kind">fn</span>Pool::live</h3>
+
+<pre class="sig">pub fn[T] Pool::live(Self[T]) -&gt; Int32</pre>
+</div>
+<div class="entry" id="pool-Pool-made">
+<h3><span class="kind">fn</span>Pool::made</h3>
+
+<pre class="sig">pub fn[T] Pool::made(Self[T], T, Int64) -&gt; Unit</pre>
+</div>
+<div class="entry" id="pool-Pool-new">
+<h3><span class="kind">fn</span>Pool::new</h3>
+
+<pre class="sig">pub fn[T] Pool::new(limits? : Limits, ward? : Ward) -&gt; Self[T]</pre>
+</div>
+<div class="entry" id="pool-Pool-refusal">
+<h3><span class="kind">fn</span>Pool::refusal</h3>
+
+<pre class="sig">pub fn[T] Pool::refusal(Self[T], Int64) -&gt; Double</pre>
+</div>
+<div class="entry" id="pool-Pool-take">
+<h3><span class="kind">fn</span>Pool::take</h3>
+
+<pre class="sig">pub fn[T] Pool::take(Self[T], Int64, roll? : Double, cpu? : Int32) -&gt; Taken[T]</pre>
+</div>
+<div class="entry" id="pool-Pool-unmade">
+<h3><span class="kind">fn</span>Pool::unmade</h3>
+
+<pre class="sig">pub fn[T] Pool::unmade(Self[T], Int64, roll? : Double) -&gt; Unit</pre>
+</div>
+<div class="entry" id="pool-Taken">
+<h3><span class="kind ty">enum</span>Taken</h3>
+<p>What a pool answers when asked for a resource. It never blocks and never opens anything: waiting and connecting both need a runtime, and this package has none. <code>Make</code> is the pool saying there is room for another, and reserving it; <code>Wait</code> is it saying there is not, and the caller's queue decides what that means. <code>Stale</code> is an idle resource too old to use, handed back so the caller can close it before asking again. The last two come only from a Ward: <code>Later</code> is making held back for that long, by the bucket or by backoff after a failure; <code>Shed</code> is the breaker refusing new connections to a failing backend, or the shedder refusing to lend while the process is overloaded.</p>
+<pre class="sig">pub(all) enum Taken[T] {</pre>
+<ul class="variants"><li>Ready(T)</li><li>Stale(T)</li><li>Make</li><li>Wait</li><li>Later(@moondate.Span)</li><li>Shed</li></ul>
+</div>
+<div class="entry" id="pool-Ward">
+<h3><span class="kind ty">struct</span>Ward</h3>
+<p>What stands in front of a pool's backend. Every part is optional and the preset has none, which leaves the pool exactly as it is without a ward.</p>
+<pre class="sig">pub(all) struct Ward {</pre>
+<ul class="variants"><li>breaker : @moonward.Breaker?</li><li>bucket : @moonward.Bucket?</li><li>backoff : @moonward.Backoff?</li><li>shedder : @moonward.Shedder?</li></ul>
+</div>
+<div class="entry" id="pool-Ward-new">
+<h3><span class="kind">fn</span>Ward::new</h3>
+
+<pre class="sig">pub fn Ward::new(breaker? : @moonward.Breaker, bucket? : @moonward.Bucket, backoff? : @moonward.Backoff, shedder? : @moonward.Shedder) -&gt; Self</pre>
+</div>
+<h4 class="group">Functions</h4>
+<div class="entry" id="pool-pick">
+<h3><span class="kind">fn</span>pick</h3>
+
+<pre class="sig">pub fn[T] pick(ArrayView[Pool[T]], Int64, first~ : Double, second~ : Double) -&gt; Int32</pre>
+</div>
+<h4 class="group">Re-exported</h4>
+<div class="entry" id="pool-Backoff">
+<h3><span class="kind ty">type</span>Backoff</h3>
+<p>An alias of a type the ward's parts are made of, so a pool can be described without naming where each part lives.</p>
+<pre class="sig">type Backoff</pre>
+</div>
+<div class="entry" id="pool-Bucket">
+<h3><span class="kind ty">type</span>Bucket</h3>
+<p>An alias of a type the ward's parts are made of, so a pool can be described without naming where each part lives.</p>
+<pre class="sig">type Bucket</pre>
+</div>
+<div class="entry" id="pool-Gate">
+<h3><span class="kind ty">type</span>Gate</h3>
+<p>An alias of a type the ward's parts are made of, so a pool can be described without naming where each part lives.</p>
+<pre class="sig">type Gate</pre>
+</div>
+<div class="entry" id="pool-Jitter">
+<h3><span class="kind ty">type</span>Jitter</h3>
+<p>An alias of a type the ward's parts are made of, so a pool can be described without naming where each part lives.</p>
+<pre class="sig">type Jitter</pre>
+</div>
+<div class="entry" id="pool-Sliding">
+<h3><span class="kind ty">type</span>Sliding</h3>
+<p>An alias of a type the ward's parts are made of, so a pool can be described without naming where each part lives.</p>
+<pre class="sig">type Sliding</pre>
+</div>
+</section>
+  </div>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <span>moonpool 0.3.0 · Apache-2.0</span>
+    <nav aria-label="Elsewhere">
+      <a href="https://github.com/moonbitstack/moonpool">GitHub</a>
+      <a href="https://mooncakes.io/docs/moonbitstack/moonpool">mooncakes</a>
+      <a href="./guide.html">Guide</a>
+      <a href="./sim.html">Simulator</a>
+    </nav>
+    <span>Lanes, ropes, and a board that keeps count.</span>
+  </div>
+</footer>
+
+</body>
+</html>

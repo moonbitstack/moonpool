@@ -1,0 +1,9 @@
+import {
+  "moonbitstack/moonpool",
+  "moonbitstack/moondate",
+  "moonbitstack/moonward",
+}
+
+options(
+  link: { "js": { "exports": [ "run" ], "format": "esm" } },
+)

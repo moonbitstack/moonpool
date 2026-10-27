@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>moonpool — resource pools for MoonBit</title>
+<meta name="description" content="A pool of connections that answers instead of acting: which resource to lend, when to make another, which to retire, and when to refuse — with the clock and the randomness passed in.">
+<meta name="theme-color" content="#f2eee3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a141d" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+<script src="assets/site.js" defer></script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f2eee3'/%3E%3Crect y='13' width='32' height='6' fill='%23124d76'/%3E%3Crect y='15' width='32' height='2' fill='%23c9402b'/%3E%3C/svg%3E">
+</head>
+<body hx-boost="true" hx-target="#main" hx-select="#main" hx-swap="innerHTML show:window:top">
+
+<header class="topbar">
+  <div class="wrap bar">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">moonpool</span>
+      <span class="brand-sub">resource pools</span>
+    </a>
+    <nav class="nav" aria-label="Site">
+      <a href="./guide.html">Guide</a>
+      <a href="./api.html">API</a>
+      <a href="./sim.html">Simulator</a>
+      <a class="gh" href="https://github.com/moonbitstack/moonpool" aria-label="Source on GitHub" title="Source on GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
+      <button class="themebtn" type="button" aria-label="Switch theme">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">Resource pools · no I/O</p>
+        <h1>A pool that<br>answers, <em>not acts</em></h1>
+      </div>
+      <div class="hero-side">
+        <p class="lede">
+          moonpool decides which connection to lend, when to open another, which to retire,
+          and when to refuse — and leaves the opening, the closing and the waiting to you.
+          Time and randomness are arguments, so a run through an hour of traffic is a test
+          you can read.
+        </p>
+        <div class="cta">
+          <a class="btn" href="./sim.html">Run the simulator</a>
+          <a class="btn ghost" href="./guide.html">Read the guide</a>
+        </div>
+        <div class="cmd">
+          <span class="mono" style="color:var(--rope)">$</span>
+          <code>moon add moonbitstack/moonpool</code>
+          <button type="button" data-copy="moon add moonbitstack/moonpool">copy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="laneboard" style="margin-top:2rem">
+      <div class="laneboard-head">
+        <span>Lane board</span>
+        <span>ten lanes, as the preset sizes them</span>
+      </div>
+      <div class="lanes" aria-hidden="true">
+        <div class="lane busy"><span>01</span></div>
+        <div class="lane busy"><span>02</span></div>
+        <div class="lane busy"><span>03</span></div>
+        <div class="lane busy"><span>04</span></div>
+        <div class="lane busy"><span>05</span></div>
+        <div class="lane idle"><span>06</span></div>
+        <div class="lane idle"><span>07</span></div>
+        <div class="lane idle"><span>08</span></div>
+        <div class="lane"><span>09</span></div>
+        <div class="lane"><span>10</span></div>
+      </div>
+      <div class="laneboard-foot">
+        <span>5 lent · 3 idle · 2 never made</span>
+        <span>live 8 of 10</span>
+      </div>
+    </div>
+
+    <div class="figures">
+      <div><b>6</b><span>answers a take can give</span></div>
+      <div><b>0</b><span>sockets, clocks or threads touched</span></div>
+      <div><b>15</b><span>public functions</span></div>
+      <div><b>10</b><span>lanes in the preset</span></div>
+    </div>
+  </section>
+
+  <section id="answers">
+    <div class="sec-head">
+      <p class="eyebrow">One call, six answers</p>
+      <h2>What <code>take</code> can say</h2>
+      <p>It never blocks and never opens anything. Each answer is an instruction to the caller.</p>
+    </div>
+    <div class="grid three">
+      <div class="card">
+        <h3><span class="kind ty">Ready</span> an idle one</h3>
+        <p class="answer">Use it, then <b>give</b> it back.</p>
+        <p>The most recently returned one comes out first: a warm connection is likelier to still be good, and handing out the newest lets the oldest age out.</p>
+      </div>
+      <div class="card">
+        <h3><span class="kind er">Stale</span> too old to use</h3>
+        <p class="answer">Close it, then take again.</p>
+        <p>An idle one past <code>keep</code> or <code>life</code> is handed over rather than skipped, so nothing is lost if the eviction timer has not run.</p>
+      </div>
+      <div class="card">
+        <h3><span class="kind ty">Make</span> there is room</h3>
+        <p class="answer">Open one, then call <b>made</b> — or <b>unmade</b> if that fails.</p>
+        <p>The room is already reserved, so a slow connect does not let the pool overfill while it is in flight.</p>
+      </div>
+      <div class="card">
+        <h3><span class="kind ty">Wait</span> all in use</h3>
+        <p class="answer">Queue the caller.</p>
+        <p>The pool has no queue of its own: waiting needs a runtime, and this package has none. Whether a caller waits, fails fast, or tries elsewhere is a policy above it.</p>
+      </div>
+      <div class="card">
+        <h3><span class="kind ty">Later</span> not yet</h3>
+        <p class="answer">Try again after that span.</p>
+        <p>Making is held back by a token bucket that spaces connections out, or by backoff after a make that failed.</p>
+      </div>
+      <div class="card">
+        <h3><span class="kind er">Shed</span> refuse</h3>
+        <p class="answer">Fail now.</p>
+        <p>The breaker has seen enough failures from the backend, or the shedder has seen the process go hot with calls still in flight.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="limits">
+    <div class="sec-head">
+      <p class="eyebrow">The four knobs</p>
+      <h2>Limits</h2>
+      <p>Every pool carries four numbers, and the preset is the one most services end up at.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>field</th><th>preset</th><th>what it decides</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">size</td><td class="mono">10</td><td>How many resources may be live at once — idle, lent, and being made.</td></tr>
+          <tr><td class="mono">idle</td><td class="mono">10</td><td>How many may sit idle. Equal to <code>size</code>, so a pool that grew under load keeps what it made.</td></tr>
+          <tr><td class="mono">keep</td><td class="mono">30 min</td><td>How long an idle resource may sit before it is retired.</td></tr>
+          <tr><td class="mono">life</td><td class="mono">forever</td><td>How long a resource may live at all, however busy it has been.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small dim" style="margin-top:0.8rem">
+      Zero means no limit for the two ages. <code>Limits::new</code> takes any of them by name;
+      <code>{ ..limits, size: 32 }</code> changes one and keeps the rest.
+    </p>
+  </section>
+
+  <section id="ward">
+    <div class="sec-head">
+      <p class="eyebrow">In front of the backend</p>
+      <h2>The ward</h2>
+      <p>Four parts, every one optional. A pool with an empty ward behaves exactly as a pool without one.</p>
+    </div>
+    <div class="grid four">
+      <div class="card"><h3>breaker</h3><p>Refuses new connections at the rate a failing backend deserves. <code>unmade</code> tells it a make failed; <code>made</code> tells it one worked.</p></div>
+      <div class="card"><h3>bucket</h3><p>Spaces makes out. A reconnection storm arrives as a queue instead of a spike.</p></div>
+      <div class="card"><h3>backoff</h3><p>After a failed make, holds every make back for a delay that grows with each failure in a row.</p></div>
+      <div class="card"><h3>shedder</h3><p>Stops lending while the process is hot and has more calls in flight than it has shown it can finish.</p></div>
+    </div>
+  </section>
+
+  <section id="next">
+    <div class="sec-head">
+      <p class="eyebrow">Where to go</p>
+      <h2>Next</h2>
+    </div>
+    <div class="grid three">
+      <a class="linkcard" href="./sim.html">
+        <h3>Simulator <span>→</span></h3>
+        <p>Twenty-four seconds of traffic against a real pool: lanes busy and idle, retirements, and the share refused by a breaker.</p>
+      </a>
+      <a class="linkcard" href="./guide.html">
+        <h3>Guide <span>→</span></h3>
+        <p>From the first <code>take</code> to a breaker in front, with the output of every snippet.</p>
+      </a>
+      <a class="linkcard" href="./api.html">
+        <h3>API <span>→</span></h3>
+        <p>Every type, function and field, with the note that ships beside it.</p>
+      </a>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <span>moonpool 0.3.0 · Apache-2.0</span>
+    <nav aria-label="Elsewhere">
+      <a href="https://github.com/moonbitstack/moonpool">GitHub</a>
+      <a href="https://mooncakes.io/docs/moonbitstack/moonpool">mooncakes</a>
+      <a href="./guide.html">Guide</a>
+      <a href="./api.html">API</a>
+    </nav>
+    <span>Lanes, ropes, and a board that keeps count.</span>
+  </div>
+</footer>
+
+</body>
+</html>

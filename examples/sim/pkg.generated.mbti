@@ -1,0 +1,13 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonpool/examples/sim"
+
+// Values
+pub fn run(String) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

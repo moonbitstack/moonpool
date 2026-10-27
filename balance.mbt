@@ -6,9 +6,8 @@
 /// and `second`, each in `[0, 1)`, and of those the one whose breaker refuses
 /// less, then the one with fewer in use.
 ///
-/// Two random choices spread load almost as evenly as scanning every pool,
-/// which is why tower's `balance` and Finagle make this choice. `-1` when there
-/// are no pools.
+/// Two random choices spread load almost as evenly as scanning every pool, and
+/// cost two draws instead of a walk over all of them. `-1` when there are no pools.
 pub fn[T] pick(
   pools : ArrayView[Pool[T]],
   now : Int64,

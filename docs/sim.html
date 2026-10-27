@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulator — moonpool</title>
+<meta name="description" content="A pool of connections under a synthetic load: lanes lent, lanes idle, idle eviction, lifetime expiry, and the share of requests a breaker refuses. Driven by the package compiled to JavaScript.">
+<meta name="theme-color" content="#f2eee3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a141d" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+<script src="assets/site.js" defer></script>
+<script src="assets/sim.js" type="module"></script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f2eee3'/%3E%3Crect y='13' width='32' height='6' fill='%23124d76'/%3E%3Crect y='15' width='32' height='2' fill='%23c9402b'/%3E%3C/svg%3E">
+</head>
+<body hx-boost="true" hx-target="#main" hx-select="#main" hx-swap="innerHTML show:window:top">
+
+<header class="topbar">
+  <div class="wrap bar">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">moonpool</span>
+      <span class="brand-sub">resource pools</span>
+    </a>
+    <nav class="nav" aria-label="Site">
+      <a href="./guide.html">Guide</a>
+      <a href="./api.html">API</a>
+      <a href="./sim.html" aria-current="page">Simulator</a>
+      <a class="gh" href="https://github.com/moonbitstack/moonpool" aria-label="Source on GitHub" title="Source on GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
+      <button class="themebtn" type="button" aria-label="Switch theme">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap">
+
+  <section class="hero" style="padding-bottom:1rem">
+    <p class="eyebrow">Simulator</p>
+    <h1>The pool,<br>under load</h1>
+    <p class="lede" style="margin-top:1rem">
+      A synthetic client borrows and returns against a real pool from this package, built for
+      the browser. Every lane, every retirement and every refusal below was decided by the
+      library; the page only draws what came back.
+    </p>
+  </section>
+
+  <div class="sim">
+    <div class="sim-main">
+      <div class="sim-head">
+        <h2>Twenty-four seconds of traffic</h2>
+        <span class="mono tiny dim" id="sim-status">running…</span>
+      </div>
+
+      <div class="sim-controls">
+        <div class="field">
+          <label for="size">size · live at most <span class="val" id="v-size">12</span></label>
+          <input id="size" type="range" min="1" max="32" value="12">
+        </div>
+        <div class="field">
+          <label for="idle">idle kept <span class="val" id="v-idle">12</span></label>
+          <input id="idle" type="range" min="0" max="32" value="12">
+        </div>
+        <div class="field">
+          <label for="rate">requests a second <span class="val" id="v-rate">20</span></label>
+          <input id="rate" type="range" min="1" max="60" value="20">
+        </div>
+        <div class="field">
+          <label for="hold">borrow lasts <span class="val" id="v-hold">300 ms</span></label>
+          <input id="hold" type="range" min="50" max="2000" step="50" value="300">
+        </div>
+        <div class="field">
+          <label for="keep">idle past <span class="val" id="v-keep">1 s</span></label>
+          <select id="keep">
+            <option value="0">never</option>
+            <option value="1" selected>1 s</option>
+            <option value="2">2 s</option>
+            <option value="5">5 s</option>
+            <option value="30">30 s</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="life">lifetime <span class="val" id="v-life">never</span></label>
+          <select id="life">
+            <option value="0" selected>never</option>
+            <option value="2">2 s</option>
+            <option value="4">4 s</option>
+            <option value="10">10 s</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fail">makes that fail <span class="val" id="v-fail">0</span></label>
+          <input id="fail" type="range" min="0" max="100" step="5" value="0">
+        </div>
+        <div class="field">
+          <label for="cpu">processor load <span class="val" id="v-cpu">200</span></label>
+          <input id="cpu" type="range" min="0" max="1000" step="50" value="200">
+        </div>
+        <div class="field">
+          <label>shape</label>
+          <label class="check"><input id="burst" type="checkbox" checked> in waves</label>
+          <label class="check"><input id="breaker" type="checkbox"> breaker in front</label>
+        </div>
+      </div>
+
+      <svg class="chart" id="chart" viewBox="0 0 900 300" role="img" aria-label="Lanes busy and idle over time, with the share of refusals"></svg>
+      <div class="legend">
+        <span><i class="l-busy"></i>busy · lent or being made</span>
+        <span><i class="l-idle"></i>idle · waiting in the pool</span>
+        <span><i class="l-refuse"></i>share of new connections refused</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:0.8rem;padding:0.2rem 0.85rem 0.9rem">
+        <span class="mono tiny dim">clock <b id="clock" class="mono">—</b></span>
+        <input id="scrub" type="range" min="0" max="239" value="239" style="flex:1;accent-color:var(--lane)" aria-label="Move through the run">
+      </div>
+    </div>
+
+    <aside class="sim-side">
+      <div class="board">
+        <h3>The board at that moment</h3>
+        <dl>
+          <dt>lent</dt><dd id="b-busy">—</dd>
+          <dt>idle</dt><dd id="b-idle">—</dd>
+          <dt>shed this step</dt><dd id="b-shed">—</dd>
+          <dt>waited this step</dt><dd id="b-wait">—</dd>
+          <dt>refusal</dt><dd id="b-refusal">—</dd>
+        </dl>
+        <div class="lane-strip" id="strip"></div>
+      </div>
+
+      <div class="board">
+        <h3>Totals for the run</h3>
+        <dl>
+          <dt>lent from the pool</dt><dd id="t-ready">—</dd>
+          <dt>made</dt><dd id="t-made">—</dd>
+          <dt>makes that failed</dt><dd id="t-failed">—</dd>
+          <dt>waited</dt><dd id="t-wait">—</dd>
+          <dt>refused</dt><dd id="t-shed">—</dd>
+          <dt>handed back stale</dt><dd id="t-stale">—</dd>
+          <dt>evicted idle</dt><dd id="t-evicted">—</dd>
+          <dt>closed on return</dt><dd id="t-closed">—</dd>
+          <dt>peak busy / idle</dt><dd id="t-peak">—</dd>
+        </dl>
+      </div>
+
+      <div class="board">
+        <h3>Scenarios</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:0.35rem;padding:0.6rem 0.6rem 0.75rem">
+          <button class="btn ghost" style="box-shadow:none;padding:0.35rem 0.55rem;font-size:0.68rem" type="button" data-preset='{"size":12,"idle":12,"keep":1,"life":0,"rate":20,"hold":300,"fail":0,"cpu":200,"burst":true,"breaker":false}'>waves</button>
+          <button class="btn ghost" style="box-shadow:none;padding:0.35rem 0.55rem;font-size:0.68rem" type="button" data-preset='{"size":12,"idle":12,"keep":1,"life":0,"rate":20,"hold":300,"fail":0,"cpu":200,"burst":false,"breaker":false}'>steady</button>
+          <button class="btn ghost" style="box-shadow:none;padding:0.35rem 0.55rem;font-size:0.68rem" type="button" data-preset='{"size":4,"idle":2,"keep":5,"life":0,"rate":30,"hold":700,"fail":0,"cpu":200,"burst":true,"breaker":false}'>saturated</button>
+          <button class="btn ghost" style="box-shadow:none;padding:0.35rem 0.55rem;font-size:0.68rem" type="button" data-preset='{"size":12,"idle":12,"keep":0,"life":4,"rate":20,"hold":300,"fail":0,"cpu":200,"burst":true,"breaker":false}'>short lifetime</button>
+          <button class="btn ghost" style="box-shadow:none;padding:0.35rem 0.55rem;font-size:0.68rem" type="button" data-preset='{"size":10,"idle":10,"keep":2,"life":0,"rate":25,"hold":300,"fail":65,"cpu":700,"burst":true,"breaker":true}'>breaking backend</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <h2>What the picture is</h2>
+      <p>Each column is one tenth of a second. The pool answers, the client acts, and the next column is what the pool counted afterwards.</p>
+    </div>
+    <div class="grid three">
+      <div class="card">
+        <h3>Two heights</h3>
+        <p class="answer"><b>busy</b> lent or being made. <b>idle</b> waiting to be lent again. The two always add up to <code>live</code>, and <code>live</code> never passes <code>size</code>.</p>
+        <p>When the busy area touches the top, the pool is full: the next request is answered <code>Wait</code>, not made to queue inside the pool.</p>
+      </div>
+      <div class="card">
+        <h3>Where the idle goes</h3>
+        <p class="answer"><b>keep</b> retires an idle resource. <b>life</b> retires any resource, however busy it has been.</p>
+        <p>Both are measured from the timestamps the caller passes in. A resource past its age comes back as <code>Stale</code> from <code>take</code> even if the eviction timer never ran.</p>
+      </div>
+      <div class="card">
+        <h3>Where the refusals come from</h3>
+        <p class="answer"><b>breaker</b> in front: failed makes raise its refusal rate, and <code>take</code> answers <code>Shed</code>.</p>
+        <p>Turn on a failing backend and watch the red line climb: the pool stops asking the backend for connections instead of waiting on each one.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <span>moonpool 0.3.0 · Apache-2.0</span>
+    <nav aria-label="Elsewhere">
+      <a href="https://github.com/moonbitstack/moonpool">GitHub</a>
+      <a href="https://mooncakes.io/docs/moonbitstack/moonpool">mooncakes</a>
+      <a href="./guide.html">Guide</a>
+      <a href="./api.html">API</a>
+    </nav>
+    <span>Lanes, ropes, and a board that keeps count.</span>
+  </div>
+</footer>
+
+</body>
+</html>

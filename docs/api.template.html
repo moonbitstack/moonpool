@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API reference — moonpool</title>
+<meta name="description" content="Every public type, method and value of moonpool, with the note that ships beside it.">
+<meta name="theme-color" content="#f2eee3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a141d" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+<script src="assets/site.js" defer></script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f2eee3'/%3E%3Crect y='13' width='32' height='6' fill='%23124d76'/%3E%3Crect y='15' width='32' height='2' fill='%23c9402b'/%3E%3C/svg%3E">
+</head>
+<body hx-boost="true" hx-target="#main" hx-select="#main" hx-swap="innerHTML show:window:top">
+
+<header class="topbar">
+  <div class="wrap bar">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">moonpool</span>
+      <span class="brand-sub">resource pools</span>
+    </a>
+    <nav class="nav" aria-label="Site">
+      <a href="./guide.html">Guide</a>
+      <a href="./api.html" aria-current="page">API</a>
+      <a href="./sim.html">Simulator</a>
+      <a class="gh" href="https://github.com/moonbitstack/moonpool" aria-label="Source on GitHub" title="Source on GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
+      <button class="themebtn" type="button" aria-label="Switch theme">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap api">
+
+  <aside class="api-nav" aria-label="Contents">
+    <!-- nav -->
+  </aside>
+
+  <div class="api-body">
+    <header class="chapter" style="padding-bottom:1.1rem">
+      <p class="eyebrow">Reference</p>
+      <h1 style="font-size:clamp(2rem,4vw,3rem);margin-bottom:0.6rem">API</h1>
+      <p class="lede">
+        Every public type, method and value of the package. A signature is what the compiler
+        reports, and the note under it is the one written beside the code.
+      </p>
+      <p class="tiny dim" style="margin-top:0.7rem"><!-- count --></p>
+    </header>
+
+    <div class="api-filter">
+      <input id="api-filter" type="search" placeholder="filter by name" aria-label="Filter entries by name" autocomplete="off" spellcheck="false">
+      <span class="count" id="api-count" aria-live="polite"></span>
+    </div>
+
+    <!-- body -->
+  </div>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <span>moonpool 0.3.0 · Apache-2.0</span>
+    <nav aria-label="Elsewhere">
+      <a href="https://github.com/moonbitstack/moonpool">GitHub</a>
+      <a href="https://mooncakes.io/docs/moonbitstack/moonpool">mooncakes</a>
+      <a href="./guide.html">Guide</a>
+      <a href="./sim.html">Simulator</a>
+    </nav>
+    <span>Lanes, ropes, and a board that keeps count.</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guide — moonpool</title>
+<meta name="description" content="A walk through moonpool: the first take, the four limits, idle eviction and lifetime, a ward in front, and picking between pools.">
+<meta name="theme-color" content="#f2eee3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a141d" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+<script src="assets/site.js" defer></script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f2eee3'/%3E%3Crect y='13' width='32' height='6' fill='%23124d76'/%3E%3Crect y='15' width='32' height='2' fill='%23c9402b'/%3E%3C/svg%3E">
+</head>
+<body hx-boost="true" hx-target="#main" hx-select="#main" hx-swap="innerHTML show:window:top">
+
+<header class="topbar">
+  <div class="wrap bar">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">moonpool</span>
+      <span class="brand-sub">resource pools</span>
+    </a>
+    <nav class="nav" aria-label="Site">
+      <a href="./guide.html" aria-current="page">Guide</a>
+      <a href="./api.html">API</a>
+      <a href="./sim.html">Simulator</a>
+      <a class="gh" href="https://github.com/moonbitstack/moonpool" aria-label="Source on GitHub" title="Source on GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
+      <button class="themebtn" type="button" aria-label="Switch theme">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap doc">
+
+  <aside class="toc" aria-label="Contents">
+    <p>Chapters</p>
+    <a href="#first">01 · The first take</a>
+    <a href="#limits">02 · Limits</a>
+    <a href="#retire">03 · Retiring</a>
+    <a href="#ward">04 · A ward</a>
+    <a href="#pick">05 · Picking</a>
+    <a href="#loop">06 · A client loop</a>
+  </aside>
+
+  <div>
+
+    <section class="chapter" id="top">
+      <p class="eyebrow">Guide</p>
+      <h1 style="font-size:clamp(2rem,4vw,3.1rem);margin-bottom:0.7rem">Six answers, one caller</h1>
+      <p class="lede">
+        The pool is a bookkeeper. It says what to do with a resource; you open it, close it,
+        and wait. These chapters walk the whole surface in that order, and every output below
+        was printed by the code above it.
+      </p>
+    </section>
+
+    <section class="chapter" id="first">
+      <h2><span class="num">01</span>The first take</h2>
+      <p>Add the module and import it. The date package is where a span comes from, and the
+        ward chapter adds one more.</p>
+
+      <div class="code">
+        <div class="code-bar"><span>shell</span><button class="copy" type="button">copy</button></div>
+        <pre><code>moon add moonbitstack/moonpool</code></pre>
+      </div>
+
+      <div class="code">
+        <div class="code-bar"><span>moon.pkg</span><button class="copy" type="button">copy</button></div>
+        <pre><code>import {
+  "moonbitstack/moonpool",
+  "moonbitstack/moondate",
+}</code></pre>
+      </div>
+
+      <p>
+        A pool of <code>Int32</code>, with the preset limits. The helper below turns an answer
+        into a line, and stays the same through the guide.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>answers.mbt</span><button class="copy" type="button">copy</button></div>
+        <pre><code>/// One answer, as the text this guide prints.
+fn describe(t : @moonpool.Taken[Int32]) -&gt; String {
+  match t {
+    Ready(id) =&gt; "Ready(\{id})"
+    Stale(id) =&gt; "Stale(\{id})"
+    Make =&gt; "Make"
+    Wait =&gt; "Wait"
+    Later(span) =&gt; "Later(\{span.nanos / 1_000_000} ms)"
+    Shed =&gt; "Shed"
+  }
+}</code></pre>
+      </div>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>let pool : @moonpool.Pool[Int32] = @moonpool.Pool::new()
+println(pool.live())
+println(describe(pool.take(0L)))
+pool.made(1, 0L)
+println(describe(pool.take(0L)))
+pool.made(2, 0L)
+println(pool.live())
+println(pool.give(1, 0L))
+println(pool.idle())
+println(describe(pool.take(1L)))</code></pre>
+      </div>
+
+      <div class="out term">0
+Make
+Make
+2
+true
+1
+Ready(1)</div>
+
+      <p>
+        An empty pool has nothing to lend, so the first two takes both answer
+        <code>Make</code>: the preset allows ten live, and only two have been made.
+        <code>made</code> registers the one you opened as lent, which is why the pool counts
+        two live and nothing idle afterwards.
+      </p>
+      <p>
+        <code>give</code> puts one back and answers <code>true</code> — it kept it. The next
+        take hands it out as <code>Ready(1)</code>: the resource returned most recently comes
+        back first.
+      </p>
+    </section>
+
+    <section class="chapter" id="limits">
+      <h2><span class="num">02</span>Limits, and what happens at the ceiling</h2>
+      <p>
+        Four numbers. <code>size</code> is how many may be live at once, counting the ones
+        being made; when the pool is full it answers <code>Wait</code> rather than borrowing
+        against the future.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>let small : @moonpool.Pool[Int32] = @moonpool.Pool::new(
+  limits=@moonpool.Limits::new(size=2),
+)
+ignore(small.take(0L))
+small.made(1, 0L)
+ignore(small.take(0L))
+small.made(2, 0L)
+println(small.live())
+println(small.busy())
+println(describe(small.take(0L)))</code></pre>
+      </div>
+
+      <div class="out term">2
+2
+Wait</div>
+
+      <p>
+        <code>Wait</code> is not a queue. The pool has no runtime, so it cannot park a caller;
+        it says that this one cannot be served now and leaves the decision above it — retry,
+        time out, or try another pool.
+      </p>
+      <p>
+        <code>idle</code> is the other ceiling: how many may sit unused. A pool that grew to
+        twenty under load and may keep ten idle will close the rest as they are returned,
+        which is what <code>give</code> answering <code>false</code> means.
+      </p>
+    </section>
+
+    <section class="chapter" id="retire">
+      <h2><span class="num">03</span>Retiring: idle age and lifetime</h2>
+      <p>
+        <code>keep</code> retires a resource that has sat unused; <code>life</code> retires one
+        that has lived too long, however busy it has been. Both are spans, and both are
+        measured against the clock you pass in.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>let p : @moonpool.Pool[Int32] = @moonpool.Pool::new(
+  limits=@moonpool.Limits::new(size=4, keep=@moondate.Span::new(seconds=1)),
+)
+ignore(p.take(0L))
+p.made(7, 0L)
+ignore(p.give(7, 0L))
+println(p.evict(500_000_000L).length())
+println(p.evict(1_500_000_000L).length())
+println(p.idle())</code></pre>
+      </div>
+
+      <div class="out term">0
+1
+0</div>
+
+      <p>
+        <code>evict</code> is the timer's job: it takes everything older than the limit and
+        hands it back for you to close. At half a second nothing is due; a second later the
+        one idle resource is.
+      </p>
+      <p>
+        A timer can be late, so <code>take</code> checks the age itself. An idle resource past
+        its limit comes back as <code>Stale</code> instead of being skipped — you close it and
+        ask again, and nothing is stranded in the pool waiting for a timer that never ran.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>ignore(p.take(0L))
+p.made(8, 0L)
+ignore(p.give(8, 0L))
+println(describe(p.take(2_000_000_000L)))</code></pre>
+      </div>
+
+      <div class="out term">Stale(8)</div>
+
+      <p>
+        Lifetime is the same test against a different stamp. A resource lent and returned
+        repeatedly keeps the moment it was made, so <code>life</code> still retires it: the
+        pool recognises a returned resource by identity, not by its arrival at the door.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>let aged : @moonpool.Pool[Int32] = @moonpool.Pool::new(
+  limits=@moonpool.Limits::new(size=2, life=@moondate.Span::new(seconds=4)),
+)
+ignore(aged.take(0L))
+aged.made(5, 0L)
+ignore(aged.give(5, 3_000_000_000L))
+println(aged.idle())
+println(describe(aged.take(5_000_000_000L)))</code></pre>
+      </div>
+
+      <div class="out term">1
+Stale(5)</div>
+
+      <p>
+        It was returned a moment ago and the pool is holding it, but it was made five seconds
+        ago and the limit is four. The answer is <code>Stale</code>, not <code>Ready</code>.
+      </p>
+    </section>
+
+    <section class="chapter" id="ward">
+      <h2><span class="num">04</span>A ward in front</h2>
+      <p>
+        The ward is what stands between the pool and a backend that is failing. Every part is
+        optional; here it is a breaker, which starts with nothing against the backend and
+        learns from the makes that fail.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>let guarded : @moonpool.Pool[Int32] = @moonpool.Pool::new(
+  limits=@moonpool.Limits::new(size=4),
+  ward=@moonpool.Ward::new(breaker=@moonward.Breaker::new()),
+)
+println(guarded.refusal(0L))
+for i in 0..&lt;8 {
+  match guarded.take(i.to_int64() * 100_000_000L, roll=0.99) {
+    Make =&gt; guarded.unmade(i.to_int64() * 100_000_000L, roll=0.5)
+    _ =&gt; ()
+  }
+}
+println(guarded.refusal(800_000_000L))
+println(describe(guarded.take(900_000_000L, roll=0.1)))
+println(describe(guarded.take(900_000_000L, roll=0.99)))</code></pre>
+      </div>
+
+      <div class="out term">0
+0.3333333333333333
+Shed
+Make</div>
+
+      <p>
+        Eight makes, all failed, and the breaker now refuses a third of what it is asked. The
+        refusal is a rate, and <code>roll</code> is the draw that decides this request: at
+        <code>0.1</code> it is inside the refused share and the answer is <code>Shed</code>; at
+        <code>0.99</code> it is outside and a make is allowed. The same two numbers always give
+        the same answer, which is what makes this testable.
+      </p>
+      <p>
+        <code>made</code> and <code>unmade</code> are what keep that rate honest. A make that
+        succeeded tells the breaker the backend is alive; one that failed counts against it.
+      </p>
+      <p>
+        A backoff part holds makes back after a failure instead of refusing them. It answers
+        <code>Later</code> with the span still to wait:
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>let held : @moonpool.Pool[Int32] = @moonpool.Pool::new(
+  limits=@moonpool.Limits::new(size=4),
+  ward=@moonpool.Ward::new(backoff=@moonward.backoff),
+)
+ignore(held.take(0L))
+held.unmade(0L, roll=0.5)
+println(describe(held.take(1_000_000L)))
+println(describe(held.take(5_000_000_000L)))</code></pre>
+      </div>
+
+      <div class="out term">Later(49 ms)
+Make</div>
+
+      <p>
+        One failure is enough to hold the next make for forty-nine milliseconds; the delay
+        grows with each failure in a row. Five seconds later the hold has passed and the pool
+        is willing to try again.
+      </p>
+    </section>
+
+    <section class="chapter" id="pick">
+      <h2><span class="num">05</span>Picking between pools</h2>
+      <p>
+        When one service is reached through several pools, <code>pick</code> chooses among
+        them: two are drawn, and of those the one whose breaker refuses less wins, then the one
+        with fewer in use.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>let a : @moonpool.Pool[Int32] = @moonpool.Pool::new(limits=@moonpool.Limits::new(size=4))
+let b : @moonpool.Pool[Int32] = @moonpool.Pool::new(limits=@moonpool.Limits::new(size=4))
+ignore(a.take(0L))
+a.made(1, 0L)
+println(@moonpool.pick([a, b][:], 0L, first=0.0, second=0.9))
+println(@moonpool.pick([][:], 0L, first=0.0, second=0.0))</code></pre>
+      </div>
+
+      <div class="out term">1
+-1</div>
+
+      <p>
+        The two draws land on slot 0 and slot 1; the second pool has nothing in use, so it is
+        the one to ask. No pools at all answers <code>-1</code>.
+      </p>
+    </section>
+
+    <section class="chapter" id="loop">
+      <h2><span class="num">06</span>A client loop</h2>
+      <p>
+        All six answers in one place. This is the whole of what a caller has to write; the
+        opening, the closing and the queueing at <code>Wait</code> belong to whatever runtime
+        is underneath.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>type Conn = Int32
+
+fn use(_c : Conn) -&gt; Unit { () }
+fn close(_c : Conn) -&gt; Unit { () }
+fn open() -&gt; Conn? { Some(1) }
+fn queue(_now : Int64) -&gt; Unit { () }
+fn later(_span : @moondate.Span) -&gt; Unit { () }
+fn fail_fast() -&gt; Unit { () }
+
+fn serve(pool : @moonpool.Pool[Conn], now : Int64, roll : Double) -&gt; Unit {
+  let conn = match pool.take(now, roll=roll) {
+    Ready(conn) =&gt; Some(conn)
+    Stale(conn) =&gt; {
+      close(conn)
+      None
+    }
+    Make =&gt;
+      match open() {
+        Some(conn) =&gt; {
+          pool.made(conn, now)
+          Some(conn)
+        }
+        None =&gt; {
+          pool.unmade(now, roll=roll)
+          None
+        }
+      }
+    Wait =&gt; {
+      queue(now)
+      None
+    }
+    Later(span) =&gt; {
+      later(span)
+      None
+    }
+    Shed =&gt; {
+      fail_fast()
+      None
+    }
+  }
+  if conn is Some(c) {
+    use(c)
+    if !pool.give(c, now) {
+      close(c)
+    }
+  }
+}</code></pre>
+      </div>
+
+      <p>
+        Three things in there are easy to get wrong, and the pool is shaped around them.
+        <code>give</code> answering <code>false</code> means the pool already had enough idle
+        and did not keep this one: close it. <code>Stale</code> is a resource you now own and
+        the pool no longer counts: close it, and take again. And a resource that breaks goes to
+        <code>drop</code>, not <code>give</code> — a pool that kept a broken connection would
+        hand it to the next caller.
+      </p>
+
+      <div class="callout">
+        <b>Where to go next.</b> The <a href="./sim.html">simulator</a> runs this loop against
+        the real package and draws what the pool decides; the <a href="./api.html">reference</a>
+        has every field and function.
+      </div>
+    </section>
+
+  </div>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <span>moonpool 0.3.0 · Apache-2.0</span>
+    <nav aria-label="Elsewhere">
+      <a href="https://github.com/moonbitstack/moonpool">GitHub</a>
+      <a href="https://mooncakes.io/docs/moonbitstack/moonpool">mooncakes</a>
+      <a href="./api.html">API</a>
+      <a href="./sim.html">Simulator</a>
+    </nav>
+    <span>Lanes, ropes, and a board that keeps count.</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -50,10 +50,9 @@ pub let forever : @moondate.Span = @moondate.Span::new()
 /// The preset: ten live at once, ten of them allowed to sit idle, discarded after
 /// thirty minutes idle and never by age.
 ///
-/// Ten is HikariCP's and `database/sql`'s default pool size, and thirty minutes is
-/// `database/sql`'s `SetConnMaxIdleTime` in the shape most deployments set it.
-/// Keeping `idle` equal to `size` is `database/sql`'s behaviour too, so a pool that
-/// grew under load does not immediately throw the connections away.
+/// Ten live is what most services settle on, and thirty minutes is long enough that
+/// a warm pool survives a quiet spell. Keeping `idle` equal to `size` means a pool
+/// that grew under load does not immediately throw away what it just made.
 pub let limits : Limits = {
   size: 10,
   idle: 10,

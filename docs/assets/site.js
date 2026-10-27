@@ -127,6 +127,25 @@
     });
   }
 
+  /* Each hover draws its own amplitude and pace for the two hairlines on a start
+     button, so no two visits move alike. */
+  const between = (lo, hi) => lo + Math.random() * (hi - lo);
+
+  document.addEventListener(
+    "pointerenter",
+    (e) => {
+      const b = e.target.closest && e.target.closest(".launch");
+      if (!b || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      b.style.setProperty("--dx", between(2.2, 4.4).toFixed(2) + "px");
+      b.style.setProperty("--dx2", between(2.2, 4.4).toFixed(2) + "px");
+      b.style.setProperty("--dur-a", Math.round(between(900, 1500)) + "ms");
+      b.style.setProperty("--dur-b", Math.round(between(1050, 1750)) + "ms");
+      b.style.setProperty("--delay-a", Math.round(between(0, 90)) + "ms");
+      b.style.setProperty("--delay-b", Math.round(between(0, 140)) + "ms");
+    },
+    true
+  );
+
   function boot() {
     paintThemeButton();
     markNav();

@@ -1,9 +1,5 @@
 import {
-  "moonbitstack/moonpool",
-  "moonbitstack/moondate",
-  "moonbitstack/moonward",
+  "moonbitstack/moonpool/examples/sim/engine",
 }
 
-options(
-  link: { "js": { "exports": [ "run" ], "format": "esm" } },
-)
+pkgtype(kind: "executable")

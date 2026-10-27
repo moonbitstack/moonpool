@@ -78,9 +78,16 @@ moon add moonbitstack/moonpool
 
 ## See it run
 
-The [simulator](https://moonbitstack.github.io/moonpool/sim.html) drives a real pool with
-synthetic traffic in the browser and draws the lanes, the retirements and the refusals that
-came back.
+```bash
+moon run examples/sim
+```
+
+A synthetic client drives a real pool for twenty-four seconds and prints one row a second:
+how many lanes were lent, how many sat idle, and how many callers had to wait.
+
+The same engine, compiled to JavaScript, runs the
+[simulator](https://moonbitstack.github.io/moonpool/sim.html) — the chart, the boards and the
+refusal line are the pool's own answers, not a mock.
 
 ## Licence
 

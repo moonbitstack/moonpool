@@ -2,7 +2,6 @@
 package "moonbitstack/moonpool/examples/sim"
 
 // Values
-pub fn run(String) -> String
 
 // Errors
 

@@ -35,9 +35,9 @@ jobs:
       - name: build the pool for the simulator
         run: |
           moon update
-          moon build --target js --release examples/sim
+          moon build --target js --release examples/sim/engine
           mkdir -p docs/assets
-          cp _build/js/release/build/examples/sim/sim.js docs/assets/moonpool.js
+          cp _build/js/release/build/examples/sim/engine/engine.js docs/assets/moonpool.js
 
       - uses: actions/upload-pages-artifact@v3
         with:

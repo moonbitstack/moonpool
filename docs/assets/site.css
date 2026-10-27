@@ -441,12 +441,12 @@ td.mono, th.mono { font-family: var(--mono); font-size: 0.82rem; }
 }
 .chapter p { max-width: 68ch; }
 
-/* Start buttons: two short dashes that slide in from the right, so the run
-   begins before the click does. */
-.scenarios { display: flex; flex-wrap: wrap; gap: 0.8rem 0.35rem; padding: 0.7rem 0.6rem 0.85rem; }
+/* Start buttons: a hairline above and below, a breath of ink at rest. On hover
+   the two run left — the lower one a beat after the upper — as if the button were
+   clearing a lane. */
+.scenarios { display: flex; flex-wrap: wrap; gap: 0.75rem 0.35rem; padding: 0.65rem 0.6rem 0.8rem; }
 
 .launch { position: relative; }
-/* The plain ones are their own button; a .btn keeps its own fill. */
 .launch:not(.btn) {
   font-family: var(--mono);
   font-size: 0.68rem;
@@ -459,52 +459,54 @@ td.mono, th.mono { font-family: var(--mono); font-size: 0.82rem; }
   cursor: pointer;
 }
 .launch:not(.btn):hover { background: var(--paper-2); }
+
 .launch::before,
 .launch::after {
   content: "";
   position: absolute;
-  right: 5px;
-  width: 14px;
-  height: 2px;
+  right: 7px;
+  width: 9px;
+  height: 1px;
   background: currentColor;
-  opacity: 0.42;
+  opacity: 0;
+  transform: translateX(5px);
   pointer-events: none;
   transition:
-    transform 0.42s cubic-bezier(0.2, 0.8, 0.3, 1),
+    transform 0.5s cubic-bezier(0.25, 0.9, 0.3, 1),
     opacity 0.3s ease;
 }
-.launch::before { top: -6px; }
-.launch::after { bottom: -6px; transition-delay: 0.05s; }
+.launch::before { top: -5px; }
+.launch::after { bottom: -5px; transition-delay: 0.07s; }
+
 .launch:hover::before,
-.launch:focus-visible::before {
-  transform: translateX(-30px);
-  opacity: 1;
-  background: var(--rope);
-}
+.launch:focus-visible::before { transform: translateX(-15px); opacity: 0.5; }
 .launch:hover::after,
-.launch:focus-visible::after {
-  transform: translateX(-42px);
-  opacity: 1;
-  background: var(--rope);
+.launch:focus-visible::after { transform: translateX(-23px); opacity: 0.5; }
+.btn.launch:hover::before, .btn.launch:focus-visible::before {
+  transform: translateX(-15px);
+  opacity: 0.8;
 }
-/* On a filled button the dashes sit outside it, on the paper. */
-.btn.launch::before, .btn.launch::after {
-  background: color-mix(in oklab, var(--ink) 55%, transparent);
+.btn.launch:hover::after, .btn.launch:focus-visible::after {
+  transform: translateX(-23px);
+  opacity: 0.8;
+}
+
+/* On a filled button — one button on the page — they can be there from the start. */
+.btn.launch::before,
+.btn.launch::after {
+  background: color-mix(in oklab, var(--ink) 40%, transparent);
   opacity: 1;
+  transform: none;
   top: auto;
   bottom: auto;
 }
-.btn.launch::before { top: -9px; }
-.btn.launch::after { bottom: -9px; }
-.btn.launch:hover::before, .btn.launch:hover::after,
-.btn.launch:focus-visible::before, .btn.launch:focus-visible::after { background: var(--rope); }
-.launch:active::before { transform: translateX(-34px); }
-.launch:active::after { transform: translateX(-46px); }
+.btn.launch::before { top: -8px; }
+.btn.launch::after { bottom: -8px; }
 
 @media (prefers-reduced-motion: reduce) {
   .launch::before, .launch::after { transition: none; }
-  .launch:hover::before, .launch:focus-visible::before { transform: translateX(-12px); }
-  .launch:hover::after, .launch:focus-visible::after { transform: translateX(-12px); }
+  .launch:hover::before, .launch:focus-visible::before { transform: translateX(-8px); }
+  .launch:hover::after, .launch:focus-visible::after { transform: translateX(-8px); }
 }
 
 /* ---- sim page -------------------------------------------------------- */

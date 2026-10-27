@@ -441,6 +441,67 @@ td.mono, th.mono { font-family: var(--mono); font-size: 0.82rem; }
 }
 .chapter p { max-width: 68ch; }
 
+/* Start buttons: two short dashes that slide in from the right, so the run
+   begins before the click does. */
+.scenarios { display: flex; flex-wrap: wrap; gap: 0.8rem 0.35rem; padding: 0.7rem 0.6rem 0.85rem; }
+
+.launch { position: relative; }
+/* The plain ones are their own button; a .btn keeps its own fill. */
+.launch:not(.btn) {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.34rem 0.58rem;
+  border: 2px solid var(--ink);
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+.launch:not(.btn):hover { background: var(--paper-2); }
+.launch::before,
+.launch::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  width: 14px;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.42;
+  pointer-events: none;
+  transition:
+    transform 0.42s cubic-bezier(0.2, 0.8, 0.3, 1),
+    opacity 0.3s ease;
+}
+.launch::before { top: -6px; }
+.launch::after { bottom: -6px; transition-delay: 0.05s; }
+.launch:hover::before,
+.launch:focus-visible::before {
+  transform: translateX(-30px);
+  opacity: 1;
+  background: var(--rope);
+}
+.launch:hover::after,
+.launch:focus-visible::after {
+  transform: translateX(-42px);
+  opacity: 1;
+  background: var(--rope);
+}
+/* On a filled button the dashes sit outside it, on the paper. */
+.btn.launch::before, .btn.launch::after { background: var(--ink); opacity: 0.5; top: auto; bottom: auto; }
+.btn.launch::before { top: -9px; }
+.btn.launch::after { bottom: -9px; }
+.btn.launch:hover::before, .btn.launch:hover::after,
+.btn.launch:focus-visible::before, .btn.launch:focus-visible::after { background: var(--rope); }
+.launch:active::before { transform: translateX(-34px); }
+.launch:active::after { transform: translateX(-46px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .launch::before, .launch::after { transition: none; }
+  .launch:hover::before, .launch:focus-visible::before { transform: translateX(-12px); }
+  .launch:hover::after, .launch:focus-visible::after { transform: translateX(-12px); }
+}
+
 /* ---- sim page -------------------------------------------------------- */
 
 .sim { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1.2rem; align-items: start; }

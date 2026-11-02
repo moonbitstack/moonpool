@@ -68,7 +68,8 @@ A ward can stand in front of the backend: a breaker that refuses new connections
 a failing one deserves, a bucket that spaces makes out, backoff after a make that failed, and
 a shedder that stops lending while the host is hot. Every part is optional, and a pool with
 an empty ward behaves exactly as a pool without one. `pick` chooses between several pools to
-one service: two drawn at random, the one that refuses less, then the one with fewer in use.
+one service: two drawn at random, the one that refuses less, then the one with fewer in use. `RoundRobin` and
+`Weighted` choose between targets with no pools behind them, by turns and by share.
 
 ## Install
 

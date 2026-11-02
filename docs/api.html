@@ -65,10 +65,18 @@
 <li><a href="#pool-Pool-take">take</a></li>
 <li><a href="#pool-Pool-unmade">unmade</a></li>
 </ol></li>
+<li><a href="#pool-RoundRobin">RoundRobin</a><ol class="sub">
+<li><a href="#pool-RoundRobin-new">new</a></li>
+<li><a href="#pool-RoundRobin-pick">pick</a></li>
+</ol></li>
 <li><a href="#pool-Taken">Taken</a><ol class="sub">
 </ol></li>
 <li><a href="#pool-Ward">Ward</a><ol class="sub">
 <li><a href="#pool-Ward-new">new</a></li>
+</ol></li>
+<li><a href="#pool-Weighted">Weighted</a><ol class="sub">
+<li><a href="#pool-Weighted-new">new</a></li>
+<li><a href="#pool-Weighted-pick">pick</a></li>
 </ol></li>
 </ol>
 <h4>Functions</h4><ol>
@@ -91,7 +99,7 @@
         Every public type, method and value of the package. A signature is what the compiler
         reports, and the note under it is the one written beside the code.
       </p>
-      <p class="tiny dim" style="margin-top:0.7rem">1 package · 28 public items</p>
+      <p class="tiny dim" style="margin-top:0.7rem">1 package · 34 public items</p>
     </header>
 
     <div class="api-filter">
@@ -200,6 +208,22 @@
 
 <pre class="sig">pub fn[T] Pool::unmade(Self[T], Int64, roll? : Double) -&gt; Unit</pre>
 </div>
+<div class="entry" id="pool-RoundRobin">
+<h3><span class="kind ty">struct</span>RoundRobin</h3>
+<p>Takes turns. It holds only a cursor, so it costs nothing to keep one per client.</p>
+<pre class="sig">pub struct RoundRobin {</pre>
+<ul class="variants"><li>// private fields</li></ul>
+</div>
+<div class="entry" id="pool-RoundRobin-new">
+<h3><span class="kind">fn</span>RoundRobin::new</h3>
+<p>A rotation starting at the first target.</p>
+<pre class="sig">pub fn RoundRobin::new() -&gt; Self</pre>
+</div>
+<div class="entry" id="pool-RoundRobin-pick">
+<h3><span class="kind">fn</span>RoundRobin::pick</h3>
+<p>The next of <code>count</code> targets, or <code>-1</code> when there are none. The cursor wraps at the current count, so it stays valid as targets come and go.</p>
+<pre class="sig">pub fn RoundRobin::pick(Self, Int32) -&gt; Int32</pre>
+</div>
 <div class="entry" id="pool-Taken">
 <h3><span class="kind ty">enum</span>Taken</h3>
 <p>What a pool answers when asked for a resource. It never blocks and never opens anything: waiting and connecting both need a runtime, and this package has none. <code>Make</code> is the pool saying there is room for another, and reserving it; <code>Wait</code> is it saying there is not, and the caller's queue decides what that means. <code>Stale</code> is an idle resource too old to use, handed back so the caller can close it before asking again. The last two come only from a Ward: <code>Later</code> is making held back for that long, by the bucket or by backoff after a failure; <code>Shed</code> is the breaker refusing new connections to a failing backend, or the shedder refusing to lend while the process is overloaded.</p>
@@ -216,6 +240,22 @@
 <h3><span class="kind">fn</span>Ward::new</h3>
 
 <pre class="sig">pub fn Ward::new(breaker? : @moonward.Breaker, bucket? : @moonward.Bucket, backoff? : @moonward.Backoff, shedder? : @moonward.Shedder) -&gt; Self</pre>
+</div>
+<div class="entry" id="pool-Weighted">
+<h3><span class="kind ty">struct</span>Weighted</h3>
+<p>Smooth weighted round-robin, nginx's: every pick credits each target with its weight, serves the one with the most credit, and charges it the total. Over a cycle each target gets its share, and the turns interleave: a weight of 5 is not five requests back to back. Credit is kept by name, so the list can change order between picks. A target that leaves loses its credit, which was earned under weights that may no longer hold.</p>
+<pre class="sig">pub struct Weighted {</pre>
+<ul class="variants"><li>// private fields</li></ul>
+</div>
+<div class="entry" id="pool-Weighted-new">
+<h3><span class="kind">fn</span>Weighted::new</h3>
+<p>A balancer with no credit yet.</p>
+<pre class="sig">pub fn Weighted::new() -&gt; Self</pre>
+</div>
+<div class="entry" id="pool-Weighted-pick">
+<h3><span class="kind">fn</span>Weighted::pick</h3>
+<p>The index of the next of <code>targets</code>, each a name and a weight. A weight of zero or less is never picked, and <code>-1</code> means nothing can be.</p>
+<pre class="sig">pub fn Weighted::pick(Self, ArrayView[(String, Int32)]) -&gt; Int32</pre>
 </div>
 <h4 class="group">Functions</h4>
 <div class="entry" id="pool-pick">

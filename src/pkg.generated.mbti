@@ -46,6 +46,12 @@ pub fn[T] Pool::refusal(Self[T], Int64) -> Double
 pub fn[T] Pool::take(Self[T], Int64, roll? : Double, cpu? : Int32) -> Taken[T]
 pub fn[T] Pool::unmade(Self[T], Int64, roll? : Double) -> Unit
 
+pub struct RoundRobin {
+  // private fields
+}
+pub fn RoundRobin::new() -> Self
+pub fn RoundRobin::pick(Self, Int32) -> Int32
+
 pub(all) enum Taken[T] {
   Ready(T)
   Stale(T)
@@ -62,6 +68,12 @@ pub(all) struct Ward {
   shedder : @moonward.Shedder?
 }
 pub fn Ward::new(breaker? : @moonward.Breaker, bucket? : @moonward.Bucket, backoff? : @moonward.Backoff, shedder? : @moonward.Shedder) -> Self
+
+pub struct Weighted {
+  // private fields
+}
+pub fn Weighted::new() -> Self
+pub fn Weighted::pick(Self, ArrayView[(String, Int32)]) -> Int32
 
 // Type aliases
 pub using @moonward {type Backoff}

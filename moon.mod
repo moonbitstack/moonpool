@@ -1,6 +1,6 @@
 name = "moonbitstack/moonpool"
 
-version = "0.3.2"
+version = "0.3.3"
 
 readme = "README.md"
 
@@ -10,9 +10,16 @@ license = "Apache-2.0"
 
 keywords = [
   "pool",
+  "resource-pool",
   "connection-pool",
-  "circuit-breaker",
+  "object-pool",
   "backoff",
+  "retry",
+  "exponential-backoff",
+  "flow-control",
+  "circuit-breaker",
+  "limits",
+  "reproducible",
   "moonbit",
 ]
 

@@ -28,12 +28,13 @@ pub(all) enum Taken[T] {
 ///
 /// The preset is [`limits`]. Build another with [`Limits::new`], or update one in
 /// place with `{ ..limits, size: 32 }`.
+#derive(Eq, Debug)
 pub(all) struct Limits {
   size : Int32
   idle : Int32
   keep : @moondate.Span
   life : @moondate.Span
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Limits with Debug::{to_repr}

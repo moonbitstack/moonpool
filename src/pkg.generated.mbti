@@ -21,12 +21,13 @@ pub let ward : Ward
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Limits {
   size : Int32
   idle : Int32
   keep : @moondate.Span
   life : @moondate.Span
-} derive(Eq, @debug.Debug)
+}
 pub fn Limits::equal(Self, Self) -> Bool
 pub fn Limits::new(size? : Int32, idle? : Int32, keep? : @moondate.Span, life? : @moondate.Span) -> Self
 pub fn Limits::not_equal(Self, Self) -> Bool

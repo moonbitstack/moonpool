@@ -17,7 +17,8 @@
 ---
 
 ```moonbit
-let pool : @moonpool.Pool[Conn] = @moonpool.Pool::new(
+// Here a connection is just its number; any type works.
+let pool : @moonpool.Pool[Int] = @moonpool.Pool::new(
   limits=@moonpool.Limits::new(size=20),
 )
 let now = 0L

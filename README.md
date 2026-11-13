@@ -112,20 +112,39 @@ given moment, hand back, give up on a broken one — are run against each of the
 this package, and every hand-out has to be the same resource, with the same number idle and
 live after it.
 
-| Reference | Steps | Compared | Result |
-|:--|--:|--:|:--|
-| SQLAlchemy 2.0.44 `QueuePool` | 30 | 18 hand-outs | all: same resource, same counts |
-| node-generic-pool 3.9.0 | 30 | 18 hand-outs | all: same resource, same counts |
+| Reference | What it ran | Hand-outs compared | Result |
+|:--|:--|--:|:--|
+| SQLAlchemy 2.0.44 `QueuePool` | four plans, thirty traces | 233 | all: same resource, same counts |
+| node-generic-pool 3.9.0 | four plans, thirty traces, ten traces with a dropped resource | 301 | all: same resource, same counts |
 
-Both are configured to the policy this package holds by default: a hard ceiling that blocks
-rather than overflows, last-in-first-out reuse, and one age limit each — the first retires by
-lifetime, the second by idle time. A reference that keeps a broken connection on its books
-until the next borrow is not compared on the count at that instant, because that moment is
-its own bookkeeping and not a decision.
+The four plans pin one decision each: reuse order, the ceiling, the two ages, a broken
+resource. The traces go after the combinations no plan thinks of — every legal ordering of
+take and give over one to four seats, drawn from a fixed seed, twelve moves each, with one
+ask past the ceiling so that a refusal is part of the recording. They carry no clock, so
+they are the same on every run and on every machine.
+
+Both references are configured to the policy this package holds by default: a hard ceiling
+that blocks rather than overflows, last-in-first-out reuse, and one age limit each — the
+first retires by lifetime, the second by idle time. Three differences are deliberate:
+
+- A broken resource. SQLAlchemy marks a discarded connection for replacement at the next
+  borrow instead of taking it off its books, so what it hands out next, and how many it says
+  are idle at that instant, are its own bookkeeping rather than the decision. The traces that
+  drop one are therefore compared against node-generic-pool, which discards at once and
+  agrees with this package; SQLAlchemy still runs the four plans, the broken-resource one
+  among them, and agrees on those.
+- A ceiling on idle resources. Neither reference has one, so it is covered by unit tests.
 
 The steps and the recordings are in `scripts/reference/` and
 `src/reference_vectors_wbtest.mbt`, and CI runs the references again and fails when the
 recording no longer matches what they answer.
+
+## One owner
+
+A `Pool` holds mutable state and no lock: it belongs to one task. Several tasks sharing one
+pool take it under a mutex — `@async.Mutex` — and everything a task does with an answer
+(`made`, `give`, `drop`) happens inside that same lock. Nothing here assumes another
+thread, so nothing has to be made safe twice: the lock above is the only one.
 
 ## Install
 

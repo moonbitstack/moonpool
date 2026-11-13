@@ -152,7 +152,7 @@
 </div>
 <div class="entry" id="pool-Limits">
 <h3><span class="kind ty">struct</span>Limits</h3>
-<p>The limits a pool holds itself to. The preset is limits. Build another with Limits::new, or update one in place with <code>{ ..limits, size: 32 }</code>.</p>
+<p>The limits a pool holds itself to. The preset is limits. Build another with Limits::new, or update one in place with <code>{ ..limits, size: 32 }</code>. Zero means no ceiling, for <code>size</code>, for <code>idle</code> and for both ages. A caller that wants nothing kept idle closes what it borrowed instead of giving it back.</p>
 <pre class="sig">pub(all) struct Limits {</pre>
 <ul class="variants"><li>size : Int32</li><li>idle : Int32</li><li>keep : @moondate.Span</li><li>life : @moondate.Span</li></ul>
 </div>

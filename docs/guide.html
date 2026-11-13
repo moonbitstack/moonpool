@@ -450,7 +450,10 @@ println(@moonpool.pick(none[:], 0L, first=0.0, second=0.0))</code></pre>
       <p>
         All six answers in one place. This is the whole of what a caller has to write; the
         opening, the closing and the queueing at <code>Wait</code> belong to whatever runtime
-        is underneath.
+        is underneath — and so does the lock. A pool is mutable state with no lock of its own,
+        so one task owns it; two tasks sharing one put every use, from <code>take</code> to
+        the <code>made</code>, <code>give</code> or <code>drop</code> that answers it, behind
+        one <code>@async.Mutex</code>.
       </p>
 
       <div class="code">

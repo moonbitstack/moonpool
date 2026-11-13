@@ -110,3 +110,5 @@ fn tuned() -> @moonpool.Pool[Int] {
 - `Make` reserves a slot. Every `Make` must end in `made` or `unmade`, or the pool thinks a slot is in use for ever.
 - There is no wait queue inside the pool: on `Wait`, the caller queues and calls `take` again when something is given back.
 - A limiter's lease is settled by `give` and `drop`, and released without a sample by `unmade`: a backend that will not connect belongs to the breaker, and one failure counted twice would shrink the pool twice.
+- A pool is mutable state with no lock. One task owns it; several tasks sharing one put every use of it — `take` and whatever it answers under the same lock — behind `@async.Mutex`.
+- `give` answers `false` for a resource the pool is already holding idle, as well as one it has no room for: one handle sits in one seat, and the caller closes what comes back twice.

@@ -111,3 +111,37 @@ test "two choices prefer the pool that refuses less, then the idler one" {
   assert_eq(pick(pools[:], 0L, first=0.1, second=0.1), 0)
   assert_eq(pick(pools[0:0], 0L, first=0.1, second=0.2), -1)
 }
+
+///|
+test "a limiter holds the pool to the concurrency the loans it sees allow" {
+  let p : Pool[Int32] = Pool::new(
+    limits=Limits::new(size=0),
+    ward=Ward::new(limiter=@moonward.Limiter::new(rule=Fixed(2))),
+  )
+  assert_eq(p.take(0L) is Make, true)
+  p.made(1, 0L)
+  assert_eq(p.take(0L) is Make, true)
+  p.made(2, 0L)
+  // Two loans are out, which is all the fixed rule allows even though `size` has
+  // no ceiling: the limiter is a concurrency cap under the pool's own.
+  assert_eq(p.take(0L) is Wait, true)
+  assert_eq(p.books().waited, 1L)
+  p.give(1, ms(1L)) |> ignore
+  assert_eq(p.take(ms(2L)) is Ready(1), true)
+  assert_eq(p.books().loans, 3L)
+}
+
+///|
+test "a limiter is released when a make fails, so the failure is counted once" {
+  let p : Pool[Int32] = Pool::new(
+    limits=Limits::new(size=0),
+    ward=Ward::new(limiter=@moonward.Limiter::new(rule=Fixed(1))),
+  )
+  assert_eq(p.take(0L) is Make, true)
+  p.unmade(0L)
+  // The breaker owns a backend that will not connect; the limiter only frees the
+  // room, so the next take is allowed rather than shrinking twice for one cause.
+  assert_eq(p.take(0L) is Make, true)
+  assert_eq(p.books().failed, 1L)
+  assert_eq(p.books().shed, 0L)
+}

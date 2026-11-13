@@ -24,80 +24,31 @@ pub(all) enum Taken[T] {
 }
 
 ///|
-/// The limits a pool holds itself to.
-///
-/// The preset is [`limits`]. Build another with [`Limits::new`], or update one in
-/// place with `{ ..limits, size: 32 }`.
-#derive(Eq, Debug)
-pub(all) struct Limits {
-  size : Int32
-  idle : Int32
-  keep : @moondate.Span
-  life : @moondate.Span
+/// An idle resource: what it is, when it was made, and when it last came back.
+priv struct Resting[T] {
+  item : T
+  born : Int64
+  rested : Int64
 }
 
 ///|
-pub extend Limits with Debug::{to_repr}
-
-///|
-pub extend Limits with Eq::{not_equal, equal}
-
-///|
-/// A span meaning "no limit", which is what zero is taken to mean for the two
-/// ages: a resource with no maximum age is never too old.
-pub let forever : @moondate.Span = @moondate.Span::new()
-
-///|
-/// The preset: ten live at once, ten of them allowed to sit idle, discarded after
-/// thirty minutes idle and never by age.
-///
-/// Ten live is what most services settle on, and thirty minutes is long enough that
-/// a warm pool survives a quiet spell. Keeping `idle` equal to `size` means a pool
-/// that grew under load does not immediately throw away what it just made.
-pub let limits : Limits = {
-  size: 10,
-  idle: 10,
-  keep: @moondate.Span::new(minutes=30L),
-  life: forever,
+/// A resource out on loan: its birth survives the loan, `since` is when this loan
+/// began, and the ward's promise and lease are settled when it comes back.
+priv struct Loan[T] {
+  item : T
+  born : Int64
+  since : Int64
+  ticket : @moonward.Ticket?
+  lease : @moonward.Lease?
 }
 
 ///|
-/// Limits by name, every knob with the preset's value.
-pub fn Limits::new(
-  size~ : Int32 = limits.size,
-  idle~ : Int32 = limits.idle,
-  keep~ : @moondate.Span = limits.keep,
-  life~ : @moondate.Span = limits.life,
-) -> Limits {
-  { size, idle, keep, life, }
-}
-
-///|
-/// What stands in front of a pool's backend. Every part is optional and the
-/// preset has none, which leaves the pool exactly as it is without a ward.
-pub(all) struct Ward {
-  breaker : @moonward.Breaker?
-  bucket : @moonward.Bucket?
-  backoff : @moonward.Backoff?
-  shedder : @moonward.Shedder?
-}
-
-///|
-pub let ward : Ward = {
-  breaker: None,
-  bucket: None,
-  backoff: None,
-  shedder: None,
-}
-
-///|
-pub fn Ward::new(
-  breaker? : @moonward.Breaker,
-  bucket? : @moonward.Bucket,
-  backoff? : @moonward.Backoff,
-  shedder? : @moonward.Shedder,
-) -> Ward {
-  { breaker, bucket, backoff, shedder, }
+/// A `Make` that has not ended yet: the room it reserved, and what the ward holds
+/// until it is settled.
+priv struct Reserved {
+  promise : @moonward.Promise?
+  ticket : @moonward.Ticket?
+  lease : @moonward.Lease?
 }
 
 ///|
@@ -114,16 +65,20 @@ pub fn Ward::new(
 /// A lent resource is recognised on its way back by identity, which is what every
 /// connection handle has. That is how its birth survives the loan: a pool that
 /// stamped a returned resource as new would never retire one by age, however old.
-///
-/// Idle resources are kept as `(item, born, rested)`, lent ones as `(item, born,
-/// ticket)`, and each resource being made as the breaker's promise and the
-/// shedder's ticket it will settle.
 struct Pool[T] {
   limits : Limits
   ward : Ward
-  free : Array[(T, Int64, Int64)]
-  out : Array[(T, Int64, @moonward.Ticket?)]
-  making : Array[(@moonward.Promise?, @moonward.Ticket?)]
+  free : Array[Resting[T]]
+  out : Array[Loan[T]]
+  making : Array[Reserved]
+  mut made : Int64
+  mut failed : Int64
+  mut loans : Int64
+  mut reused : Int64
+  mut retired : Int64
+  mut waited : Int64
+  mut deferred : Int64
+  mut shed : Int64
   mut failures : Int32
   mut hold : Int64
 }
@@ -131,7 +86,23 @@ struct Pool[T] {
 ///|
 /// An empty pool.
 pub fn[T] Pool::new(limits~ : Limits = limits, ward~ : Ward = ward) -> Pool[T] {
-  { limits, ward, free: [], out: [], making: [], failures: 0, hold: 0L, }
+  {
+    limits,
+    ward,
+    free: [],
+    out: [],
+    making: [],
+    made: 0L,
+    failed: 0L,
+    loans: 0L,
+    reused: 0L,
+    retired: 0L,
+    waited: 0L,
+    deferred: 0L,
+    shed: 0L,
+    failures: 0,
+    hold: 0L,
+  }
 }
 
 ///|
@@ -153,6 +124,38 @@ pub fn[T] Pool::busy(self : Pool[T]) -> Int32 {
 }
 
 ///|
+/// The gauges and counters together, as one reading.
+pub fn[T] Pool::books(self : Pool[T]) -> Books {
+  {
+    live: self.live(),
+    idle: self.idle(),
+    busy: self.busy(),
+    made: self.made,
+    failed: self.failed,
+    loans: self.loans,
+    reused: self.reused,
+    retired: self.retired,
+    waited: self.waited,
+    deferred: self.deferred,
+    shed: self.shed,
+  }
+}
+
+///|
+/// Every resource that is out on loan, with how long it has been out.
+///
+/// A pool cannot know which loan was forgotten: only the caller knows how long its
+/// own work may take. So the pool tells the truth and the caller sets the
+/// threshold — anything held longer than that is a leak to log against the item.
+pub fn[T] Pool::loans(self : Pool[T], now : Int64) -> Array[Lent[T]] {
+  let out : Array[Lent[T]] = []
+  for loan in self.out {
+    out.push({ item: loan.item, held: { nanos: now - loan.since, }, })
+  }
+  out
+}
+
+///|
 /// Take one, or be told to make one, or to wait — or be handed one that is too old
 /// to use.
 ///
@@ -171,59 +174,103 @@ pub fn[T] Pool::take(
   roll~ : Double = 0.5,
   cpu~ : Int32 = 0,
 ) -> Taken[T] {
-  if self.free.last() is Some(held) && self.expired(held.1, held.2, now) {
+  if self.free.last() is Some(rested) &&
+    self.expired(rested.born, rested.rested, now) {
     self.free.pop() |> ignore
-    return Stale(held.0)
+    self.retired += 1
+    return Stale(rested.item)
   }
   let ticket = match self.ward.shedder {
     Some(shedder) =>
       match shedder.allow(now, cpu) {
         Some(ticket) => Some(ticket)
-        None => return Shed
+        None => {
+          self.shed += 1
+          return Shed
+        }
       }
     None => None
   }
-  if self.free.pop() is Some(held) {
-    self.out.push((held.0, held.1, ticket))
-    return Ready(held.0)
+  let lease = match self.ward.limiter {
+    Some(limiter) =>
+      match limiter.acquire(now) {
+        Some(lease) => Some(lease)
+        None => {
+          if ticket is Some(t) {
+            t.fail()
+          }
+          self.waited += 1
+          return Wait
+        }
+      }
+    None => None
+  }
+  if self.free.pop() is Some(rested) {
+    self.out.push({
+      item: rested.item,
+      born: rested.born,
+      since: now,
+      ticket,
+      lease,
+    })
+    self.loans += 1
+    self.reused += 1
+    return Ready(rested.item)
   }
   let refuse = (taken : Taken[T]) => {
     if ticket is Some(t) {
       t.fail()
     }
+    if lease is Some(l) {
+      l.ignore()
+    }
     taken
   }
   if self.limits.size > 0 && self.live() >= self.limits.size {
+    self.waited += 1
     return refuse(Wait)
   }
   if now < self.hold {
+    self.deferred += 1
     return refuse(Later({ nanos: self.hold - now, }))
   }
   if self.ward.bucket is Some(bucket) && !bucket.take(now) {
+    self.deferred += 1
     return refuse(Later(bucket.next(now)))
   }
   let promise = match self.ward.breaker {
     Some(breaker) =>
       match breaker.allow(now, roll) {
         Some(promise) => Some(promise)
-        None => return refuse(Shed)
+        None => {
+          self.shed += 1
+          return refuse(Shed)
+        }
       }
     None => None
   }
-  self.making.push((promise, ticket))
+  self.making.push({ promise, ticket, lease, })
   Make
 }
 
 ///|
 /// Register a resource made after `take` said `Make`, as lent and born `now`.
 pub fn[T] Pool::made(self : Pool[T], item : T, now : Int64) -> Unit {
-  let (promise, ticket) = self.reservation()
-  if promise is Some(p) {
+  let reserved = self.reservation()
+  if reserved.promise is Some(p) {
     p.pass(now)
   }
+  self.made += 1
+  self.loans += 1
   self.failures = 0
   self.hold = 0L
-  self.out.push((item, now, ticket))
+  self.out.push({
+    item,
+    born: now,
+    since: now,
+    ticket: reserved.ticket,
+    lease: reserved.lease,
+  })
 }
 
 ///|
@@ -231,18 +278,26 @@ pub fn[T] Pool::made(self : Pool[T], item : T, now : Int64) -> Unit {
 /// it failed. The breaker counts the failure, and with a `Backoff` in the ward
 /// no `Make` is handed out again until its delay has passed; `roll` draws the
 /// jitter.
+///
+/// The limiter that let the attempt through is released without a sample: the
+/// breaker is what owns a backend that will not connect, and counting the same
+/// failure in two places would shrink the pool twice for one cause.
 pub fn[T] Pool::unmade(
   self : Pool[T],
   now : Int64,
   roll~ : Double = 0.5,
 ) -> Unit {
-  let (promise, ticket) = self.reservation()
-  if promise is Some(p) {
+  let reserved = self.reservation()
+  if reserved.promise is Some(p) {
     p.fail(now)
   }
-  if ticket is Some(t) {
+  if reserved.ticket is Some(t) {
     t.fail()
   }
+  if reserved.lease is Some(l) {
+    l.ignore()
+  }
+  self.failed += 1
   self.failures += 1
   if self.ward.backoff is Some(backoff) {
     self.hold = now + backoff.delay(self.failures, random=roll).nanos
@@ -250,12 +305,11 @@ pub fn[T] Pool::unmade(
 }
 
 ///|
-/// The oldest reservation, or nothing to settle when there is none.
-fn[T] Pool::reservation(
-  self : Pool[T],
-) -> (@moonward.Promise?, @moonward.Ticket?) {
+/// The oldest reservation and what the ward holds for it, or nothing at all
+/// when there is none.
+fn[T] Pool::reservation(self : Pool[T]) -> Reserved {
   if self.making.length() == 0 {
-    (None, None)
+    { promise: None, ticket: None, lease: None, }
   } else {
     self.making.remove(0)
   }
@@ -272,14 +326,17 @@ fn[T] Pool::reservation(
 /// [`Pool::made`] being called: it fills the room `take` reserved and is taken as
 /// born `now`.
 pub fn[T] Pool::give(self : Pool[T], item : T, now : Int64) -> Bool {
-  let (born, ticket) = self.recall(item, now)
-  if ticket is Some(t) {
+  let loan = self.recall(item, now)
+  if loan.ticket is Some(t) {
     t.pass(now)
+  }
+  if loan.lease is Some(l) {
+    l.pass(now)
   }
   if self.limits.idle > 0 && self.free.length() >= self.limits.idle {
     return false
   }
-  self.free.push((item, born, now))
+  self.free.push({ item, born: loan.born, rested: now, })
   true
 }
 
@@ -289,8 +346,12 @@ pub fn[T] Pool::give(self : Pool[T], item : T, now : Int64) -> Bool {
 /// This is what keeps the live count honest: without it a failed connection would
 /// hold a slot for ever and the pool would stop making new ones.
 pub fn[T] Pool::drop(self : Pool[T], item : T) -> Unit {
-  if self.recall(item, 0L).1 is Some(t) {
+  let loan = self.recall(item, 0L)
+  if loan.ticket is Some(t) {
     t.fail()
+  }
+  if loan.lease is Some(l) {
+    l.ignore()
   }
 }
 
@@ -302,18 +363,19 @@ pub fn[T] Pool::drop(self : Pool[T], item : T) -> Unit {
 /// so a resource is never lost for want of the timer having run.
 pub fn[T] Pool::evict(self : Pool[T], now : Int64) -> Array[T] {
   let gone : Array[T] = []
-  let keep : Array[(T, Int64, Int64)] = []
-  for held in self.free {
-    if self.expired(held.1, held.2, now) {
-      gone.push(held.0)
+  let keep : Array[Resting[T]] = []
+  for rested in self.free {
+    if self.expired(rested.born, rested.rested, now) {
+      gone.push(rested.item)
     } else {
-      keep.push(held)
+      keep.push(rested)
     }
   }
   self.free.clear()
-  for held in keep {
-    self.free.push(held)
+  for rested in keep {
+    self.free.push(rested)
   }
+  self.retired += gone.length().to_int64()
   gone
 }
 
@@ -323,31 +385,34 @@ pub fn[T] Pool::evict(self : Pool[T], now : Int64) -> Array[T] {
 /// through `give` and can be closed then.
 pub fn[T] Pool::close(self : Pool[T]) -> Array[T] {
   let out : Array[T] = []
-  for held in self.free {
-    out.push(held.0)
+  for rested in self.free {
+    out.push(rested.item)
   }
   self.free.clear()
   out
 }
 
 ///|
-/// Take a lent resource off the books, answering the birth it was lent with.
+/// Take a lent resource off the books, answering the loan it was lent with.
 ///
-/// One the pool never lent answers `fallback` and frees a reserved room, if there is
-/// one: it is the resource a `Make` asked for, coming back without having been
-/// registered.
-fn[T] Pool::recall(
-  self : Pool[T],
-  item : T,
-  fallback : Int64,
-) -> (Int64, @moonward.Ticket?) {
+/// One the pool never lent answers `fallback` for its birth, and takes over the
+/// oldest reservation if there is one: it is the resource a `Make` asked for,
+/// coming back without having been registered.
+fn[T] Pool::recall(self : Pool[T], item : T, fallback : Int64) -> Loan[T] {
   for i, lent in self.out {
-    if physical_equal(lent.0, item) {
+    if physical_equal(lent.item, item) {
       self.out.remove(i) |> ignore
-      return (lent.1, lent.2)
+      return lent
     }
   }
-  (fallback, self.reservation().1)
+  let reserved = self.reservation()
+  {
+    item,
+    born: fallback,
+    since: fallback,
+    ticket: reserved.ticket,
+    lease: reserved.lease,
+  }
 }
 
 ///|

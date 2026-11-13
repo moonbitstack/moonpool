@@ -22,6 +22,31 @@ pub let ward : Ward
 
 // Types and methods
 #derive(Eq, @debug.Debug)
+pub(all) struct Books {
+  live : Int32
+  idle : Int32
+  busy : Int32
+  made : Int64
+  failed : Int64
+  loans : Int64
+  reused : Int64
+  retired : Int64
+  waited : Int64
+  deferred : Int64
+  shed : Int64
+}
+pub fn Books::equal(Self, Self) -> Bool
+pub fn Books::not_equal(Self, Self) -> Bool
+pub fn Books::to_repr(Self) -> @debug.Repr
+
+#derive(@debug.Debug)
+pub(all) struct Lent[T] {
+  item : T
+  held : @moondate.Span
+}
+pub fn[T : @debug.Debug] Lent::to_repr(Self[T]) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
 pub(all) struct Limits {
   size : Int32
   idle : Int32
@@ -34,6 +59,7 @@ pub fn Limits::not_equal(Self, Self) -> Bool
 pub fn Limits::to_repr(Self) -> @debug.Repr
 
 type Pool[T]
+pub fn[T] Pool::books(Self[T]) -> Books
 pub fn[T] Pool::busy(Self[T]) -> Int32
 pub fn[T] Pool::close(Self[T]) -> Array[T]
 pub fn[T] Pool::drop(Self[T], T) -> Unit
@@ -41,6 +67,7 @@ pub fn[T] Pool::evict(Self[T], Int64) -> Array[T]
 pub fn[T] Pool::give(Self[T], T, Int64) -> Bool
 pub fn[T] Pool::idle(Self[T]) -> Int32
 pub fn[T] Pool::live(Self[T]) -> Int32
+pub fn[T] Pool::loans(Self[T], Int64) -> Array[Lent[T]]
 pub fn[T] Pool::made(Self[T], T, Int64) -> Unit
 pub fn[T] Pool::new(limits? : Limits, ward? : Ward) -> Self[T]
 pub fn[T] Pool::refusal(Self[T], Int64) -> Double
@@ -67,8 +94,9 @@ pub(all) struct Ward {
   bucket : @moonward.Bucket?
   backoff : @moonward.Backoff?
   shedder : @moonward.Shedder?
+  limiter : @moonward.Limiter?
 }
-pub fn Ward::new(breaker? : @moonward.Breaker, bucket? : @moonward.Bucket, backoff? : @moonward.Backoff, shedder? : @moonward.Shedder) -> Self
+pub fn Ward::new(breaker? : @moonward.Breaker, bucket? : @moonward.Bucket, backoff? : @moonward.Backoff, shedder? : @moonward.Shedder, limiter? : @moonward.Limiter) -> Self
 
 pub struct Weighted {
   // private fields

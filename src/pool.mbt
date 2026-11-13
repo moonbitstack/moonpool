@@ -256,15 +256,29 @@ pub fn[T] Pool::take(
 
 ///|
 /// Register a resource made after `take` said `Make`, as lent and born `now`.
+///
+/// A handle the pool already holds is not loaned twice: the registration counts, the
+/// reservation it came with is settled, and the loan the pool already had stands. One
+/// handle lent twice would be two loans to close with one `give`, which is a slot lost
+/// for good.
 pub fn[T] Pool::made(self : Pool[T], item : T, now : Int64) -> Unit {
   let reserved = self.reservation()
   if reserved.promise is Some(p) {
     p.pass(now)
   }
   self.made += 1
-  self.loans += 1
   self.failures = 0
   self.hold = 0L
+  if self.holds(item) {
+    if reserved.ticket is Some(t) {
+      t.pass(now)
+    }
+    if reserved.lease is Some(l) {
+      l.ignore()
+    }
+    return
+  }
+  self.loans += 1
   self.out.push({
     item,
     born: now,
@@ -326,7 +340,14 @@ fn[T] Pool::reservation(self : Pool[T]) -> Reserved {
 /// A resource the pool does not recognise is one made after a `Make` without
 /// [`Pool::made`] being called: it fills the room `take` reserved and is taken as
 /// born `now`.
+///
+/// One the pool is already holding idle answers `false` as well: a resource handed
+/// back twice would otherwise sit in two seats, and a later `take` would lend the same
+/// handle to two callers.
 pub fn[T] Pool::give(self : Pool[T], item : T, now : Int64) -> Bool {
+  if self.resting(item) {
+    return false
+  }
   let loan = self.recall(item, now)
   if loan.ticket is Some(t) {
     t.pass(now)
@@ -414,6 +435,31 @@ fn[T] Pool::recall(self : Pool[T], item : T, fallback : Int64) -> Loan[T] {
     ticket: reserved.ticket,
     lease: reserved.lease,
   }
+}
+
+///|
+/// Whether this very resource is already sitting idle.
+fn[T] Pool::resting(self : Pool[T], item : T) -> Bool {
+  for rested in self.free {
+    if physical_equal(rested.item, item) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// Whether the pool already holds this very resource, idle or lent.
+fn[T] Pool::holds(self : Pool[T], item : T) -> Bool {
+  if self.resting(item) {
+    return true
+  }
+  for loan in self.out {
+    if physical_equal(loan.item, item) {
+      return true
+    }
+  }
+  false
 }
 
 ///|

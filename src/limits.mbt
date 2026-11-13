@@ -6,6 +6,9 @@
 ///
 /// The preset is [`limits`]. Build another with [`Limits::new`], or update one in
 /// place with `{ ..limits, size: 32 }`.
+///
+/// Zero means no ceiling, for `size`, for `idle` and for both ages. A caller that
+/// wants nothing kept idle closes what it borrowed instead of giving it back.
 #derive(Eq, Debug)
 pub(all) struct Limits {
   size : Int32

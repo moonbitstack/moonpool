@@ -63,14 +63,69 @@ way back by identity, not by arrival: `give` does not reset its birth, so `life`
 connection that has been reused all along. A broken one goes to `drop`, which is what keeps
 the live count honest.
 
+## The books
+
+`live`, `idle` and `busy` say what the pool holds now. `books` says that and what it has
+done, as counters that only rise — so two readings say what happened between them.
+
+```moonbit
+let counted : @moonpool.Pool[Int] = @moonpool.Pool::new(
+  limits=@moonpool.Limits::new(size=8),
+)
+ignore(counted.take(0L))
+counted.made(1, 0L)
+ignore(counted.give(1, 100_000_000L))
+ignore(counted.take(200_000_000L))
+let books = counted.books()
+assert_eq(books.live, 1)
+assert_eq(books.loans, 2L)
+assert_eq(books.reused, 1L)
+// One was made for the asker; the other came out of idle.
+assert_eq(books.made, 1L)
+```
+
+`loans` answers the other half: not how many are out, but which, and for how long. How long
+a caller's work may take is the caller's to say, so the pool only reports.
+
+```moonbit
+for loan in counted.loans(500_000_000L) {
+  assert_eq(loan.item, 1)
+  assert_eq(loan.held, @moondate.Span::new(millis=300L))
+}
+```
+
 ## Around the pool
 
 A ward can stand in front of the backend: a breaker that refuses new connections at the rate
-a failing one deserves, a bucket that spaces makes out, backoff after a make that failed, and
-a shedder that stops lending while the host is hot. Every part is optional, and a pool with
+a failing one deserves, a bucket that spaces makes out, backoff after a make that failed, a
+shedder that stops lending while the host is hot, and a limiter that holds a lease for every
+loan and moves its ceiling with how long they take. Every part is optional, and a pool with
 an empty ward behaves exactly as a pool without one. `pick` chooses between several pools to
 one service: two drawn at random, the one that refuses less, then the one with fewer in use. `RoundRobin` and
 `Weighted` choose between targets with no pools behind them, by turns and by share.
+
+## Conformance
+
+A pool has no standard to conform to, so its decisions are compared with the answers of two
+implementations written by other people, in other languages. The same steps — take at a
+given moment, hand back, give up on a broken one — are run against each of them and against
+this package, and every hand-out has to be the same resource, with the same number idle and
+live after it.
+
+| Reference | Steps | Compared | Result |
+|:--|--:|--:|:--|
+| SQLAlchemy 2.0.44 `QueuePool` | 30 | 18 hand-outs | all: same resource, same counts |
+| node-generic-pool 3.9.0 | 30 | 18 hand-outs | all: same resource, same counts |
+
+Both are configured to the policy this package holds by default: a hard ceiling that blocks
+rather than overflows, last-in-first-out reuse, and one age limit each — the first retires by
+lifetime, the second by idle time. A reference that keeps a broken connection on its books
+until the next borrow is not compared on the count at that instant, because that moment is
+its own bookkeeping and not a decision.
+
+The steps and the recordings are in `scripts/reference/` and
+`src/reference_vectors_wbtest.mbt`, and CI runs the references again and fails when the
+recording no longer matches what they answer.
 
 ## Install
 

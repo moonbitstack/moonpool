@@ -1,10 +1,12 @@
-"""Write docs/api.html from the package's interface file and the `///` comments in
-its sources. Run from the repository root:
+"""Write docs/api.html from the package's interface file and the `///` comments in its
+sources, and fill the numbers the site's pages take from the source. Run from the
+repository root:
 
-    python scripts/gen_api.py
+    python scripts/gen_docs.py
 
-The output is committed; the docs workflow regenerates it and fails when the
-result differs from what is in the tree.
+The output is committed; the docs workflow regenerates it and fails when the result
+differs from what is in the tree, which is what keeps a version number or a count on a
+page from being typed by hand and then going stale.
 """
 
 import html
@@ -135,6 +137,60 @@ def items_of(folder):
                 {"kind": "impl", "name": m.group(1), "sig": line, "owner": m.group(2)}
             )
     return items
+
+
+def version():
+    return re.search(r'^version = "([^"]+)"', (ROOT / "moon.mod").read_text(encoding="utf-8"), re.M).group(1)
+
+
+def lanes():
+    """The preset's size, which is how many lanes the site draws."""
+    source = (SRC / "limits.mbt").read_text(encoding="utf-8")
+    return re.search(r"^pub let limits : Limits = \{\s*\n\s*size: (\d+)", source, re.M).group(1)
+
+
+def names_in(mbti):
+    """Every public name the interface file declares, so the page can be held to all of them."""
+    out = set()
+    for line in mbti.splitlines():
+        for pattern in (
+            r"^pub fn(?:\[[^\]]*\])?\s+([\w:]+)",
+            r"^pub let (\w+)",
+            r"^pub(?:\(all\))?\s+(?:struct|enum|suberror)\s+(\w+)",
+            r"^type (\w+)",
+            r"^pub using @\w+ \{type (\w+)\}",
+        ):
+            m = re.match(pattern, line)
+            if m:
+                out.add(m.group(1))
+    return out
+
+
+def missing(items, mbti):
+    """Declared but absent from the page: the reference is incomplete."""
+    shown = {i["name"] for i in items if i["kind"] != "impl"}
+    return sorted(n for n in names_in(mbti) if n not in shown and not TRAIT_METHODS.search(n + "("))
+
+
+FILL = re.compile(r'(<(\w+)[^>]*\bdata-fill="(\w+)"[^>]*>)(.*?)(</\2>)', re.S)
+
+
+def fill_pages(facts):
+    """A number the page shows and the source knows is written here, never by hand."""
+    for page in sorted((ROOT / "docs").glob("*.html")):
+        if page.name.endswith(".template.html"):
+            continue
+        text = page.read_text(encoding="utf-8")
+
+        def swap(m):
+            key = m.group(3)
+            if key not in facts:
+                raise SystemExit(f"{page.name}: nothing in the source answers data-fill={key!r}")
+            return m.group(1) + str(facts[key]) + m.group(5)
+
+        filled = FILL.sub(swap, text)
+        if filled != text:
+            page.write_text(filled, encoding="utf-8", newline="\n")
 
 
 def prose(text):
@@ -272,6 +328,25 @@ def render():
     )
     (ROOT / "docs" / "api.html").write_text(page, encoding="utf-8", newline="\n")
     print(f"docs/api.html: {total} public items")
+
+    absent = missing(items, (SRC / "pkg.generated.mbti").read_text(encoding="utf-8"))
+    if absent:
+        raise SystemExit("the interface has items the page does not list: " + ", ".join(absent))
+
+    fill_pages(
+        {
+            "version": version(),
+            "lanes": lanes(),
+            "answers": len([v for v in items if v["kind"] == "enum" and v["name"] == "Taken"][0]["variants"]),
+            "functions": len(
+                [
+                    i
+                    for i in items
+                    if i["kind"] in ("fn", "method") and not TRAIT_METHODS.search(i["sig"])
+                ]
+            ),
+        }
+    )
 
 
 render()

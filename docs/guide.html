@@ -45,9 +45,10 @@
     <a href="#first">01 · The first take</a>
     <a href="#limits">02 · Limits</a>
     <a href="#retire">03 · Retiring</a>
-    <a href="#ward">04 · A ward</a>
-    <a href="#pick">05 · Picking</a>
-    <a href="#loop">06 · A client loop</a>
+    <a href="#books">04 · The books</a>
+    <a href="#ward">05 · A ward</a>
+    <a href="#pick">06 · Picking</a>
+    <a href="#loop">07 · A client loop</a>
   </aside>
 
   <div>
@@ -246,13 +247,84 @@ Stale(5)</div>
       </p>
     </section>
 
+    <section class="chapter" id="books">
+      <h2><span class="num">04</span>The books</h2>
+      <p>
+        <code>live</code>, <code>idle</code> and <code>busy</code> answer what the pool holds
+        at this instant. <code>books()</code> answers that and, beside it, what the pool has
+        done: counters that only rise, so two readings a second apart say what happened between
+        them.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>let book : @moonpool.Pool[Int32] = @moonpool.Pool::new(
+  limits=@moonpool.Limits::new(size=4),
+)
+ignore(book.take(0L))
+book.made(1, 0L)
+ignore(book.give(1, 100_000_000L))
+ignore(book.take(200_000_000L))
+let books = book.books()
+println(books.live)
+println(books.idle)
+println(books.busy)
+println(books.made)
+println(books.loans)
+println(books.reused)</code></pre>
+      </div>
+
+      <div class="out term">1
+0
+1
+1
+2
+1</div>
+
+      <p>
+        One resource was made and handed out twice: <code>made</code> is one, <code>loans</code>
+        two, and one of those two came from idle, which is <code>reused</code>. The difference
+        between the last two is what the pool had to open for its callers — the cold-start cost
+        a service watches when it tunes <code>size</code>.
+      </p>
+      <p>
+        <code>loans(now)</code> answers the other half of the same question: not how many are
+        out, but which, and for how long. A pool cannot know how long a caller's work may take,
+        so the threshold is the caller's.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>for loan in book.loans(500_000_000L) {
+  println("\{loan.item} out for \{loan.held.nanos / 1_000_000} ms")
+}</code></pre>
+      </div>
+
+      <div class="out term">1 out for 300 ms</div>
+
+      <p>
+        It was lent at two hundred milliseconds and it is now five hundred: three hundred out.
+        Compare that with the longest a request may take, and anything past it is a loan someone
+        forgot to give back.
+      </p>
+    </section>
+
     <section class="chapter" id="ward">
-      <h2><span class="num">04</span>A ward in front</h2>
+      <h2><span class="num">05</span>A ward in front</h2>
       <p>
         The ward is what stands between the pool and a backend that is failing. Every part is
         optional; here it is a breaker, which starts with nothing against the backend and
-        learns from the makes that fail.
+        learns from the makes that fail. It needs the ward's own package in the imports.
       </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moon.pkg</span><button class="copy" type="button">copy</button></div>
+        <pre><code>import {
+  "moonbitstack/moonpool",
+  "moonbitstack/moondate",
+  "moonbitstack/moonward",
+}</code></pre>
+      </div>
 
       <div class="code">
         <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
@@ -305,18 +377,48 @@ println(describe(held.take(1_000_000L)))
 println(describe(held.take(5_000_000_000L)))</code></pre>
       </div>
 
-      <div class="out term">Later(49 ms)
+      <div class="out term">Later(99 ms)
 Make</div>
 
       <p>
-        One failure is enough to hold the next make for forty-nine milliseconds; the delay
+        One failure is enough to hold the next make for ninety-nine milliseconds; the delay
         grows with each failure in a row. Five seconds later the hold has passed and the pool
         is willing to try again.
+      </p>
+      <p>
+        The fifth part is not about a failing backend but about the pool's own concurrency. A
+        limiter holds a lease for every loan and moves its ceiling with how long those loans
+        take, so a backend that answers slowly is asked for less at once.
+      </p>
+
+      <div class="code">
+        <div class="code-bar"><span>moonbit</span><button class="copy" type="button">copy</button></div>
+        <pre><code>let capped : @moonpool.Pool[Int32] = @moonpool.Pool::new(
+  ward=@moonpool.Ward::new(limiter=@moonward.Limiter::new(rule=Fixed(1))),
+)
+ignore(capped.take(0L))
+capped.made(1, 0L)
+println(describe(capped.take(0L)))
+println(capped.books().waited)
+ignore(capped.give(1, 0L))
+println(describe(capped.take(0L)))</code></pre>
+      </div>
+
+      <div class="out term">Wait
+1
+Ready(1)</div>
+
+      <p>
+        One loan is out and the fixed rule allows one, so the asker is told to wait even though
+        <code>size</code> has room. When the loan comes back the lease is settled with its
+        round-trip time, and the rule is free to raise or lower the ceiling. A make that fails
+        releases its lease without a sample: a backend that will not connect is the breaker's
+        business, and counting one cause in two places would shrink the pool twice for it.
       </p>
     </section>
 
     <section class="chapter" id="pick">
-      <h2><span class="num">05</span>Picking between pools</h2>
+      <h2><span class="num">06</span>Picking between pools</h2>
       <p>
         When one service is reached through several pools, <code>pick</code> chooses among
         them: two are drawn, and of those the one whose breaker refuses less wins, then the one
@@ -330,7 +432,8 @@ let b : @moonpool.Pool[Int32] = @moonpool.Pool::new(limits=@moonpool.Limits::new
 ignore(a.take(0L))
 a.made(1, 0L)
 println(@moonpool.pick([a, b][:], 0L, first=0.0, second=0.9))
-println(@moonpool.pick([][:], 0L, first=0.0, second=0.0))</code></pre>
+let none : Array[@moonpool.Pool[Int32]] = []
+println(@moonpool.pick(none[:], 0L, first=0.0, second=0.0))</code></pre>
       </div>
 
       <div class="out term">1
@@ -343,7 +446,7 @@ println(@moonpool.pick([][:], 0L, first=0.0, second=0.0))</code></pre>
     </section>
 
     <section class="chapter" id="loop">
-      <h2><span class="num">06</span>A client loop</h2>
+      <h2><span class="num">07</span>A client loop</h2>
       <p>
         All six answers in one place. This is the whole of what a caller has to write; the
         opening, the closing and the queueing at <code>Wait</code> belong to whatever runtime
@@ -423,7 +526,7 @@ fn serve(pool : @moonpool.Pool[Conn], now : Int64, roll : Double) -&gt; Unit {
 
 <footer class="site">
   <div class="wrap foot">
-    <span>moonpool 0.3.0 · Apache-2.0</span>
+    <span>moonpool <span data-fill="version">0.3.4</span> · Apache-2.0</span>
     <nav aria-label="Elsewhere">
       <a href="https://github.com/moonbitstack/moonpool">GitHub</a>
       <a href="https://mooncakes.io/docs/moonbitstack/moonpool">mooncakes</a>

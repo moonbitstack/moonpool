@@ -329,6 +329,7 @@ section { padding: 3rem 0; }
 
 .grid { display: grid; gap: 1rem; }
 .grid.four { grid-template-columns: repeat(4, 1fr); }
+.grid.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .grid.three { grid-template-columns: repeat(3, 1fr); }
 .grid.two { grid-template-columns: repeat(2, 1fr); }
 
@@ -626,6 +627,7 @@ footer.site { border-top: 2px solid var(--ink); padding: 1.8rem 0 2.4rem; margin
 
 @media (width <= 1080px) {
   .grid.four { grid-template-columns: repeat(2, 1fr); }
+  .grid.five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .sim { grid-template-columns: minmax(0, 1fr); }
   .sim-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .api { grid-template-columns: 190px minmax(0, 1fr); gap: 2rem; }
@@ -635,7 +637,7 @@ footer.site { border-top: 2px solid var(--ink); padding: 1.8rem 0 2.4rem; margin
   body { font-size: 16px; }
   .wrap { width: min(100% - 1.9rem, 100%); }
   .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; }
-  .grid.four, .grid.three, .grid.two { grid-template-columns: 1fr; }
+  .grid.four, .grid.five, .grid.three, .grid.two { grid-template-columns: 1fr; }
   .figures { grid-template-columns: repeat(2, 1fr); }
   .figures div { border-left: 0; border-top: 1px solid var(--line); }
   .figures div:nth-child(-n+2) { border-top: 0; }

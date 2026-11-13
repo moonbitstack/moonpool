@@ -89,10 +89,10 @@
     </div>
 
     <div class="figures">
-      <div><b>6</b><span>answers a take can give</span></div>
+      <div><b data-fill="answers">6</b><span>answers a take can give</span></div>
       <div><b>0</b><span>sockets, clocks or threads touched</span></div>
-      <div><b>15</b><span>public functions</span></div>
-      <div><b>10</b><span>lanes in the preset</span></div>
+      <div><b data-fill="functions">21</b><span>public functions</span></div>
+      <div><b data-fill="lanes">10</b><span>lanes in the preset</span></div>
     </div>
   </section>
 
@@ -161,17 +161,45 @@
     </p>
   </section>
 
+  <section id="books">
+    <div class="sec-head">
+      <p class="eyebrow">What it has done</p>
+      <h2>The books</h2>
+      <p>Three gauges and eight counters, read in one call — the numbers a metrics endpoint wants.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>field</th><th>means</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">live · idle · busy</td><td>What the pool holds now: everything, the part sitting idle, the part lent or being made.</td></tr>
+          <tr><td class="mono">made · failed</td><td>Resources registered, and makes that came back as a failure. The second is what the breaker counts.</td></tr>
+          <tr><td class="mono">loans · reused</td><td>Hand-outs, and the part of them taken from idle. The difference is what was made for the asker.</td></tr>
+          <tr><td class="mono">retired</td><td>Resources too old to hand out, given back for the caller to close — through <code>take</code> or <code>evict</code>.</td></tr>
+          <tr><td class="mono">waited · deferred · shed</td><td>The three refusals: no room, held back by the bucket or by backoff, and refused outright.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small dim" style="margin-top:0.8rem">
+      Counters only rise, so two readings in a row say what happened between them.
+      <code>loans(now)</code> answers what is still out and for how long; a caller compares each
+      span with its own threshold, and a loan that has outlived it is a leak to log.
+    </p>
+  </section>
+
   <section id="ward">
     <div class="sec-head">
       <p class="eyebrow">In front of the backend</p>
       <h2>The ward</h2>
-      <p>Four parts, every one optional. A pool with an empty ward behaves exactly as a pool without one.</p>
+      <p>Five parts, every one optional. A pool with an empty ward behaves exactly as a pool without one.</p>
     </div>
-    <div class="grid four">
+    <div class="grid five">
       <div class="card"><h3>breaker</h3><p>Refuses new connections at the rate a failing backend deserves. <code>unmade</code> tells it a make failed; <code>made</code> tells it one worked.</p></div>
       <div class="card"><h3>bucket</h3><p>Spaces makes out. A reconnection storm arrives as a queue instead of a spike.</p></div>
       <div class="card"><h3>backoff</h3><p>After a failed make, holds every make back for a delay that grows with each failure in a row.</p></div>
       <div class="card"><h3>shedder</h3><p>Stops lending while the process is hot and has more calls in flight than it has shown it can finish.</p></div>
+      <div class="card"><h3>limiter</h3><p>Holds a lease for every loan and moves its ceiling with how long they take: a slow backend is allowed fewer at once, a quick one more, under the same <code>size</code>.</p></div>
     </div>
   </section>
 
@@ -201,7 +229,7 @@
 
 <footer class="site">
   <div class="wrap foot">
-    <span>moonpool 0.3.0 · Apache-2.0</span>
+    <span>moonpool <span data-fill="version">0.3.4</span> · Apache-2.0</span>
     <nav aria-label="Elsewhere">
       <a href="https://github.com/moonbitstack/moonpool">GitHub</a>
       <a href="https://mooncakes.io/docs/moonbitstack/moonpool">mooncakes</a>

@@ -40,8 +40,8 @@ jobs:
         run: |
           moon update
           moon info --target all
-          python3 scripts/gen_api.py
-          git diff --exit-code docs/api.html
+          python3 scripts/gen_docs.py
+          git diff --exit-code docs
           moon build --target js --release src/examples/sim/engine
           cp _build/js/release/build/examples/sim/engine/engine.js docs/assets/moonpool.js
 

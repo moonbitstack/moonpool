@@ -48,10 +48,15 @@
 <li><a href="#pool-ward">ward</a></li>
 </ol>
 <h4>Types</h4><ol>
+<li><a href="#pool-Books">Books</a><ol class="sub">
+</ol></li>
+<li><a href="#pool-Lent">Lent</a><ol class="sub">
+</ol></li>
 <li><a href="#pool-Limits">Limits</a><ol class="sub">
 <li><a href="#pool-Limits-new">new</a></li>
 </ol></li>
 <li><a href="#pool-Pool">Pool</a><ol class="sub">
+<li><a href="#pool-Pool-books">books</a></li>
 <li><a href="#pool-Pool-busy">busy</a></li>
 <li><a href="#pool-Pool-close">close</a></li>
 <li><a href="#pool-Pool-drop">drop</a></li>
@@ -59,6 +64,7 @@
 <li><a href="#pool-Pool-give">give</a></li>
 <li><a href="#pool-Pool-idle">idle</a></li>
 <li><a href="#pool-Pool-live">live</a></li>
+<li><a href="#pool-Pool-loans">loans</a></li>
 <li><a href="#pool-Pool-made">made</a></li>
 <li><a href="#pool-Pool-new">new</a></li>
 <li><a href="#pool-Pool-refusal">refusal</a></li>
@@ -99,7 +105,7 @@
         Every public type, method and value of the package. A signature is what the compiler
         reports, and the note under it is the one written beside the code.
       </p>
-      <p class="tiny dim" style="margin-top:0.7rem">1 package · 34 public items</p>
+      <p class="tiny dim" style="margin-top:0.7rem">1 package · 38 public items</p>
     </header>
 
     <div class="api-filter">
@@ -132,6 +138,18 @@
 <pre class="sig">pub let ward : Ward</pre>
 </div>
 <h4 class="group">Types</h4>
+<div class="entry" id="pool-Books">
+<h3><span class="kind ty">struct</span>Books</h3>
+<p>What a pool has done, as one reading: how much it holds now, and how much has passed through it. The three gauges are the pool at this instant. The counters only ever rise, so the difference between two readings is what happened in between; a service that exports them to its metrics endpoint gets the same numbers a connection pool's management bean would offer. <code>loans</code> is the total of resources handed to callers, and <code>reused</code> the part of it taken from idle — so <code>loans - reused</code> is how many were made for the asker, which is the pool's cold-start cost.</p>
+<pre class="sig">pub(all) struct Books {</pre>
+<ul class="variants"><li>live : Int32</li><li>idle : Int32</li><li>busy : Int32</li><li>made : Int64</li><li>failed : Int64</li><li>loans : Int64</li><li>reused : Int64</li><li>retired : Int64</li><li>waited : Int64</li><li>deferred : Int64</li><li>shed : Int64</li></ul>
+</div>
+<div class="entry" id="pool-Lent">
+<h3><span class="kind ty">struct</span>Lent</h3>
+<p>A resource that is out on loan: what it is, and how long it has been gone. A caller compares <code>held</code> with its own threshold to find a loan that was never given back — what a leak detector logs, with the item so the borrower can be traced.</p>
+<pre class="sig">pub(all) struct Lent[T] {</pre>
+<ul class="variants"><li>item : T</li><li>held : @moondate.Span</li></ul>
+</div>
 <div class="entry" id="pool-Limits">
 <h3><span class="kind ty">struct</span>Limits</h3>
 <p>The limits a pool holds itself to. The preset is limits. Build another with Limits::new, or update one in place with <code>{ ..limits, size: 32 }</code>.</p>
@@ -145,8 +163,13 @@
 </div>
 <div class="entry" id="pool-Pool">
 <h3><span class="kind er">opaque</span>Pool</h3>
-<p>The bookkeeping of holding a limited number of things. It does not open, close, or wait — a caller with a runtime does all three. What it knows is how many are live, which are idle, which are lent and since when each was made, and which have sat or lived long enough to be let go. Time is passed in as whatever the caller's clock reads, in nanoseconds; the value's origin does not matter because only differences are used. That is what makes a test drive a pool through an hour in three lines. A lent resource is recognised on its way back by identity, which is what every connection handle has. That is how its birth survives the loan: a pool that stamped a returned resource as new would never retire one by age, however old. Idle resources are kept as <code>(item, born, rested)</code>, lent ones as <code>(item, born, ticket)</code>, and each resource being made as the breaker's promise and the shedder's ticket it will settle.</p>
+<p>The bookkeeping of holding a limited number of things. It does not open, close, or wait — a caller with a runtime does all three. What it knows is how many are live, which are idle, which are lent and since when each was made, and which have sat or lived long enough to be let go. Time is passed in as whatever the caller's clock reads, in nanoseconds; the value's origin does not matter because only differences are used. That is what makes a test drive a pool through an hour in three lines. A lent resource is recognised on its way back by identity, which is what every connection handle has. That is how its birth survives the loan: a pool that stamped a returned resource as new would never retire one by age, however old.</p>
 <pre class="sig">type Pool[T]</pre>
+</div>
+<div class="entry" id="pool-Pool-books">
+<h3><span class="kind">fn</span>Pool::books</h3>
+
+<pre class="sig">pub fn[T] Pool::books(Self[T]) -&gt; Books</pre>
 </div>
 <div class="entry" id="pool-Pool-busy">
 <h3><span class="kind">fn</span>Pool::busy</h3>
@@ -182,6 +205,11 @@
 <h3><span class="kind">fn</span>Pool::live</h3>
 
 <pre class="sig">pub fn[T] Pool::live(Self[T]) -&gt; Int32</pre>
+</div>
+<div class="entry" id="pool-Pool-loans">
+<h3><span class="kind">fn</span>Pool::loans</h3>
+
+<pre class="sig">pub fn[T] Pool::loans(Self[T], Int64) -&gt; Array[Lent[T]]</pre>
 </div>
 <div class="entry" id="pool-Pool-made">
 <h3><span class="kind">fn</span>Pool::made</h3>
@@ -232,14 +260,14 @@
 </div>
 <div class="entry" id="pool-Ward">
 <h3><span class="kind ty">struct</span>Ward</h3>
-<p>What stands in front of a pool's backend. Every part is optional and the preset has none, which leaves the pool exactly as it is without a ward.</p>
+<p>What stands in front of a pool's backend. Every part is optional and the preset has none, which leaves the pool exactly as it is without a ward. The four guards are about a backend that misbehaves. The limiter is about the pool's own concurrency: it holds a lease for every loan, and the limit it keeps moves with how long those loans take, so a quiet backend is allowed more at once and a slow one fewer, under the same <code>size</code>.</p>
 <pre class="sig">pub(all) struct Ward {</pre>
-<ul class="variants"><li>breaker : @moonward.Breaker?</li><li>bucket : @moonward.Bucket?</li><li>backoff : @moonward.Backoff?</li><li>shedder : @moonward.Shedder?</li></ul>
+<ul class="variants"><li>breaker : @moonward.Breaker?</li><li>bucket : @moonward.Bucket?</li><li>backoff : @moonward.Backoff?</li><li>shedder : @moonward.Shedder?</li><li>limiter : @moonward.Limiter?</li></ul>
 </div>
 <div class="entry" id="pool-Ward-new">
 <h3><span class="kind">fn</span>Ward::new</h3>
 
-<pre class="sig">pub fn Ward::new(breaker? : @moonward.Breaker, bucket? : @moonward.Bucket, backoff? : @moonward.Backoff, shedder? : @moonward.Shedder) -&gt; Self</pre>
+<pre class="sig">pub fn Ward::new(breaker? : @moonward.Breaker, bucket? : @moonward.Bucket, backoff? : @moonward.Backoff, shedder? : @moonward.Shedder, limiter? : @moonward.Limiter) -&gt; Self</pre>
 </div>
 <div class="entry" id="pool-Weighted">
 <h3><span class="kind ty">struct</span>Weighted</h3>
@@ -296,7 +324,7 @@
 
 <footer class="site">
   <div class="wrap foot">
-    <span>moonpool 0.3.0 · Apache-2.0</span>
+    <span>moonpool <span data-fill="version">0.3.4</span> · Apache-2.0</span>
     <nav aria-label="Elsewhere">
       <a href="https://github.com/moonbitstack/moonpool">GitHub</a>
       <a href="https://mooncakes.io/docs/moonbitstack/moonpool">mooncakes</a>

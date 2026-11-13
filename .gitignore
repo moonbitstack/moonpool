@@ -8,3 +8,4 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 docs/assets/moonpool.js
+node_modules/

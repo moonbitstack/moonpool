@@ -1,0 +1,169 @@
+[
+  {
+    "name": "an idle resource goes out last in, first out",
+    "size": 3,
+    "idle": 3,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "the size is a ceiling, and a full pool makes the caller wait",
+    "size": 1,
+    "idle": 1,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "a resource past its lifetime is replaced, not handed out",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 300,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 100
+      },
+      {
+        "op": "give",
+        "at": 100,
+        "of": 1
+      },
+      {
+        "op": "sleep",
+        "at": 900
+      },
+      {
+        "op": "take",
+        "at": 900
+      },
+      {
+        "op": "give",
+        "at": 900,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 1000
+      }
+    ]
+  },
+  {
+    "name": "a resource that broke gives its room to a fresh one",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "drop",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  }
+]

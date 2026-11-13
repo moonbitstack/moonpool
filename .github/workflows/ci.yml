@@ -73,6 +73,17 @@ jobs:
         if: runner.os == 'Linux'
         run: python3 scripts/check_snippets.py
 
+      # The differential data is a recording of two mature pools in other languages. Regenerate
+      # it from them here: a tree that no longer holds what they answer fails the step.
+      - name: the reference vectors are what the references answered
+        if: runner.os == 'Linux'
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet -r scripts/reference/requirements.txt
+          npm install --prefix scripts/reference --no-audit --no-fund
+          .venv/bin/python scripts/gen_reference_vectors.py
+          git diff --exit-code
+
       - name: interfaces are up to date
         run: |
           moon info --target all && git diff --exit-code

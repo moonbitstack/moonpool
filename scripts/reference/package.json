@@ -1,0 +1,8 @@
+{
+  "name": "moonpool-reference-pool",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "generic-pool": "3.9.0"
+  }
+}

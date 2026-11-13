@@ -15,6 +15,7 @@ that use it are for the other reference. The order is set to LIFO, which this po
 offers as an option and moonpool does by default.
 """
 
+import argparse
 import json
 import pathlib
 import sys
@@ -103,7 +104,10 @@ def run(scenario):
 def main():
     import sqlalchemy
 
-    plan = json.loads(PLAN.read_text(encoding="utf-8"))
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--plan", default=str(PLAN))
+    args = ap.parse_args()
+    plan = json.loads(pathlib.Path(args.plan).read_text(encoding="utf-8"))
     print(
         json.dumps(
             {

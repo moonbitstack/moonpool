@@ -1,0 +1,1922 @@
+[
+  {
+    "name": "trace 1 over 1 seats",
+    "size": 1,
+    "idle": 1,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 2 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 3 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 4 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 5 over 4 seats",
+    "size": 4,
+    "idle": 4,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 6 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 7 over 4 seats",
+    "size": 4,
+    "idle": 4,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 8 over 4 seats",
+    "size": 4,
+    "idle": 4,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      }
+    ]
+  },
+  {
+    "name": "trace 9 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 10 over 1 seats",
+    "size": 1,
+    "idle": 1,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 11 over 3 seats",
+    "size": 3,
+    "idle": 3,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      }
+    ]
+  },
+  {
+    "name": "trace 12 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 13 over 1 seats",
+    "size": 1,
+    "idle": 1,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 14 over 4 seats",
+    "size": 4,
+    "idle": 4,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 15 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 16 over 3 seats",
+    "size": 3,
+    "idle": 3,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 17 over 4 seats",
+    "size": 4,
+    "idle": 4,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 18 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 19 over 1 seats",
+    "size": 1,
+    "idle": 1,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 20 over 1 seats",
+    "size": 1,
+    "idle": 1,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 21 over 3 seats",
+    "size": 3,
+    "idle": 3,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      }
+    ]
+  },
+  {
+    "name": "trace 22 over 4 seats",
+    "size": 4,
+    "idle": 4,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 23 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 24 over 4 seats",
+    "size": 4,
+    "idle": 4,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 25 over 1 seats",
+    "size": 1,
+    "idle": 1,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 26 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  },
+  {
+    "name": "trace 27 over 1 seats",
+    "size": 1,
+    "idle": 1,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 28 over 1 seats",
+    "size": 1,
+    "idle": 1,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 29 over 4 seats",
+    "size": 4,
+    "idle": 4,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 5
+      }
+    ]
+  },
+  {
+    "name": "trace 30 over 2 seats",
+    "size": 2,
+    "idle": 2,
+    "keep_ms": 0,
+    "life_ms": 0,
+    "steps": [
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 1
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 2
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 3
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "give",
+        "at": 0,
+        "of": 4
+      },
+      {
+        "op": "take",
+        "at": 0
+      },
+      {
+        "op": "take",
+        "at": 0
+      }
+    ]
+  }
+]

@@ -21,7 +21,13 @@ import { fileURLToPath } from "node:url";
 import { createPool } from "generic-pool";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const PLAN = JSON.parse(readFileSync(join(HERE, "generic_pool_plan.json"), "utf8"));
+const planArg = process.argv.indexOf("--plan");
+const PLAN = JSON.parse(
+  readFileSync(
+    planArg > 0 ? process.argv[planArg + 1] : join(HERE, "generic_pool_plan.json"),
+    "utf8",
+  ),
+);
 const WAIT = 60;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));

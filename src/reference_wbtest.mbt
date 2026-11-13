@@ -94,3 +94,61 @@ test "the answers match generic-pool's, step for step" {
     replay("generic-pool", vector)
   }
 }
+
+///|
+test "the random traces answer as SQLAlchemy's pool does" {
+  for group in sqlalchemy_traces {
+    for vector in group {
+      replay("SQLAlchemy", vector)
+    }
+  }
+}
+
+///|
+test "the random traces answer as generic-pool does" {
+  for group in generic_pool_traces {
+    for vector in group {
+      replay("generic-pool", vector)
+    }
+  }
+}
+
+///|
+test "the traces with a broken resource answer as generic-pool does" {
+  // Only the reference that discards at once: the other marks a dropped connection for
+  // replacement at the next borrow, so what it hands out after a drop is its own
+  // bookkeeping rather than the decision being compared.
+  for group in generic_pool_broken {
+    for vector in group {
+      replay("generic-pool", vector)
+    }
+  }
+}
+
+///|
+test "the two references answer the same plan the same way" {
+  // Two pools written by other people in other languages, driven by the same steps: where
+  // the plan asks the same question they have to agree, or one of them is not the oracle
+  // the other is taken for. The age plans are not compared by name or by limit — one
+  // retires by lifetime and the other by idle time — only by what they handed out.
+  assert_eq(sqlalchemy_vectors.length(), generic_pool_vectors.length())
+  for at in 0..<sqlalchemy_vectors.length() {
+    assert_eq(sqlalchemy_vectors[at].takes, generic_pool_vectors[at].takes)
+    assert_eq(sqlalchemy_vectors[at].gauges, generic_pool_vectors[at].gauges)
+  }
+  // The traces ask the same question of both, so they have to answer alike too.
+  assert_eq(sqlalchemy_traces.length(), generic_pool_traces.length())
+  for group in 0..<sqlalchemy_traces.length() {
+    assert_eq(
+      sqlalchemy_traces[group].length(),
+      generic_pool_traces[group].length(),
+    )
+    for at in 0..<sqlalchemy_traces[group].length() {
+      let one = sqlalchemy_traces[group][at]
+      let other = generic_pool_traces[group][at]
+      assert_eq(one.name, other.name)
+      assert_eq(one.takes, other.takes)
+      assert_eq(one.gauges, other.gauges)
+    }
+  }
+}

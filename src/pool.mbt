@@ -13,7 +13,8 @@
 /// The last two come only from a [`Ward`]: `Later` is making held back for that
 /// long, by the bucket or by backoff after a failure; `Shed` is the breaker
 /// refusing new connections to a failing backend, or the shedder refusing to lend
-/// while the process is overloaded.
+/// while the process is overloaded. A ward's limiter can answer `Wait` as well, when
+/// the concurrency it allows is already out on loan.
 pub(all) enum Taken[T] {
   Ready(T)
   Stale(T)

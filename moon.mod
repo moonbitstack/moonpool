@@ -26,8 +26,8 @@ keywords = [
 description = "Resource pools, backoff retries and flow control for MoonBit."
 
 import {
-  "moonbitstack/moondate@0.1.5",
-  "moonbitstack/moonward@0.2.1",
+  "moonbitstack/moondate@0.1.7",
+  "moonbitstack/moonward@0.2.3",
 }
 
 source = "src"

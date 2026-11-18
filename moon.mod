@@ -1,6 +1,6 @@
 name = "moonbitstack/moonpool"
 
-version = "0.4.0"
+version = "0.4.1"
 
 readme = "README.md"
 
@@ -35,8 +35,8 @@ keywords = [
 description = "Resource pools, backoff retries and flow control for MoonBit."
 
 import {
-  "moonbitstack/moondate@0.1.7",
-  "moonbitstack/moonward@0.2.3",
+  "moonbitstack/moondate@0.2.1",
+  "moonbitstack/moonward@0.3.1",
 }
 
 source = "src"
